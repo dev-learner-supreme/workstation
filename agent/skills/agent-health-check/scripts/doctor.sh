@@ -43,22 +43,20 @@ fi
 echo ""
 echo "1. Toolchains & Runtimes:"
 
-# Check fnm & Node
-if [ -d "$HOME/.local/share/fnm" ] || command -v fnm &>/dev/null; then
+# Check Node runtime (via mise, fnm, or native system nodejs)
+NODE_VER=""
+if command -v node &>/dev/null; then
+  NODE_VER=$(node -v 2>/dev/null || echo "")
+elif [ -d "$HOME/.local/share/fnm" ] || command -v fnm &>/dev/null; then
   export PATH="$HOME/.local/share/fnm:$PATH"
-  if [ ! -d "${XDG_RUNTIME_DIR:-}" ]; then
-    export XDG_RUNTIME_DIR="/tmp/runtime-$USER"
-    mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null
-  fi
   eval "$("$HOME/.local/share/fnm/fnm" env 2>/dev/null)" 2>/dev/null || true
-  NODE_VER=$(node -v 2>/dev/null || echo "not in path")
-  if [ "$NODE_VER" != "not in path" ]; then
-    check_pass "Node runtime active: $NODE_VER (fnm)"
-  else
-    check_warn "fnm installed but Node not active in current subshell"
-  fi
+  NODE_VER=$(node -v 2>/dev/null || echo "")
+fi
+
+if [ -n "$NODE_VER" ]; then
+  check_pass "Node runtime active: $NODE_VER"
 else
-  check_fail "fnm (Node manager) missing"
+  check_fail "Node runtime missing (install nodejs or mise activate)"
 fi
 
 # Check esptool & pio
@@ -172,7 +170,8 @@ done
 echo ""
 echo "4. Remote Sync & Disaster Recovery:"
 
-if [ -d "$HOME/.agents/.git" ]; then
+if [ -d "$HOME/.agents/.git" ] || git -C "$HOME/.agents" rev-parse --is-inside-work-tree &>/dev/null; then
+  check_pass "~/.agents repository tracked and active"
   REMOTE_URL=$(git -C "$HOME/.agents" remote get-url origin 2>/dev/null || echo "")
   if [ -n "$REMOTE_URL" ]; then
     check_pass "Private remote linked: $REMOTE_URL"
@@ -184,47 +183,34 @@ if [ -d "$HOME/.agents/.git" ]; then
   if git -C "$HOME/.agents" diff-index --quiet HEAD -- 2>/dev/null; then
     check_pass "Working directory is clean (all rules committed)"
   else
-    check_warn "Uncommitted changes exist in ~/.agents"
-  fi
-
-  # Check unpushed commits
-  UNPUSHED=$(git -C "$HOME/.agents" rev-list --count origin/main..main 2>/dev/null || echo "0")
-  if [ "$UNPUSHED" = "0" ]; then
-    check_pass "Local repository in sync with origin/main (0 unpushed commits)"
-  else
-    check_warn "$UNPUSHED unpushed commits in ~/.agents; run 'sync-agent'"
+    check_warn "Uncommitted changes exist in repository"
   fi
 else
-  check_fail "~/.agents is not a git repository"
+  check_fail "~/.agents is not tracked by Git"
 fi
 
 # ------------------------------------------------------------------------------
-# 5. WSL2 RESOURCE FOOTPRINT & HOST HEADROOM
+# 5. WORKSTATION HARDWARE & RESOURCE HEADROOM
 # ------------------------------------------------------------------------------
 echo ""
-echo "5. WSL2 Resource Footprint & Host Headroom:"
+echo "5. Workstation Hardware & Resource Headroom:"
 
 FREE_RAM=$(free -m 2>/dev/null | awk '/^Mem:/{print $7}' || echo "0")
 TOTAL_RAM=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || echo "0")
 if [ "$FREE_RAM" -gt 1500 ]; then
-  check_pass "Available WSL2 RAM: ${FREE_RAM}MB / ${TOTAL_RAM}MB (Safe headroom)"
+  check_pass "Available RAM: ${FREE_RAM}MB / ${TOTAL_RAM}MB (Safe headroom)"
 else
-  check_warn "Low available WSL2 RAM: ${FREE_RAM}MB / ${TOTAL_RAM}MB (Starvation risk)"
+  check_warn "Low available RAM: ${FREE_RAM}MB / ${TOTAL_RAM}MB (Starvation risk)"
 fi
 
-# Check physical host SSD capacity (via /mnt/c) rather than virtual WSL2 VHDX (~1TB sparse limit)
-if [ -d "/mnt/c" ] && df -h /mnt/c &>/dev/null; then
-  HOST_AVAIL=$(df -h /mnt/c 2>/dev/null | awk 'NR==2 {print $4}' || echo "unknown")
-  HOST_SIZE=$(df -h /mnt/c 2>/dev/null | awk 'NR==2 {print $2}' || echo "476G")
-  HOST_USE_PCT=$(df -h /mnt/c 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' || echo "0")
-  if [ "$HOST_USE_PCT" -lt 85 ]; then
-    check_pass "Physical Host SSD (C:): ${HOST_AVAIL} available / ${HOST_SIZE} (${HOST_USE_PCT}% used)"
-  else
-    check_warn "Physical Host SSD (C:) constrained: ${HOST_AVAIL} available / ${HOST_SIZE} (${HOST_USE_PCT}% used)"
-  fi
+# Check root NVMe SSD capacity
+ROOT_AVAIL=$(df -h / 2>/dev/null | awk 'NR==2 {print $4}' || echo "unknown")
+ROOT_SIZE=$(df -h / 2>/dev/null | awk 'NR==2 {print $2}' || echo "unknown")
+ROOT_USE_PCT=$(df -h / 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' || echo "0")
+if [ "$ROOT_USE_PCT" -lt 85 ]; then
+  check_pass "NVMe Root SSD (/): ${ROOT_AVAIL} available / ${ROOT_SIZE} (${ROOT_USE_PCT}% used)"
 else
-  # Fallback for isolated subshells where /mnt/c is unmapped
-  check_pass "Physical Host SSD (C:): ~413GB available / 476GB (Acer Swift Go 14 NVMe)"
+  check_warn "NVMe Root SSD (/) constrained: ${ROOT_AVAIL} available / ${ROOT_SIZE} (${ROOT_USE_PCT}% used)"
 fi
 
 # ------------------------------------------------------------------------------

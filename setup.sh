@@ -212,6 +212,11 @@ if [[ -d "$REPO_DIR/home" ]]; then
     chmod +x "$HOME/.local/bin/"* 2>/dev/null || true
   fi
 
+  # Ensure global gitignore is active
+  if [[ -f "$HOME/.config/git/ignore" ]]; then
+    git config --global core.excludesfile "$HOME/.config/git/ignore" 2>/dev/null || true
+  fi
+
   echo "${GREEN}[✓] Dotfiles successfully restored from home/.${RESET}"
 else
   echo "${YELLOW}[!] Warning: home/ directory not found in repository.${RESET}"
@@ -236,9 +241,11 @@ if [[ -d "$AGENT_SOURCE" ]]; then
   echo "${GREEN}[✓] ~/.agents linked to workstation/agent.${RESET}"
 
   # Interoperability symlinks
-  echo "[+] Configuring Cursor & Claude Code bridges..."
+  echo "[+] Configuring Agent bridges (Cursor, Claude, Gemini, Canonical)..."
   ln -sfn "$AGENT_TARGET/AGENTS.md" "$HOME/.cursorrules"
   ln -sfn "$AGENT_TARGET/AGENTS.md" "$HOME/CLAUDE.md"
+  ln -sfn "$AGENT_TARGET/AGENTS.md" "$HOME/GEMINI.md"
+  ln -sfn "$AGENT_TARGET/AGENTS.md" "$HOME/AGENTS.md"
 
   # Claude Code settings bridge (Spaces agent-badge hooks)
   if [[ -f "$AGENT_SOURCE/integrations/claude-settings.json" ]]; then

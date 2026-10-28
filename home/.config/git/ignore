@@ -1,0 +1,9 @@
+# Global Git Excludes (Omarchy Workstation)
+.agents/
+MEMORY.md
+.claude/
+.gemini/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

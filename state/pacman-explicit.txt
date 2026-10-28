@@ -85,6 +85,7 @@ lsp-plugins-lv2
 lua51
 luarocks
 man-db
+micro
 mise-bin
 mkinitcpio
 mpv
@@ -133,6 +134,7 @@ thermald
 tldr
 tmux
 tobi-try
+tree
 tree-sitter-cli
 ttf-ia-writer
 ttf-jetbrains-mono-nerd-basic
