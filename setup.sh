@@ -100,7 +100,7 @@ if [[ -f "$FLATPAK_STATE" && -s "$FLATPAK_STATE" ]] && command -v flatpak &>/dev
     while IFS=$'\t' read -r app origin; do
       [[ -z "$app" ]] && continue
       echo "[+] Installing flatpak: $app..."
-      flatpak install -y "${origin:-flathub}" "$app" 2>/dev/null || true
+      flatpak install -y --noninteractive "${origin:-flathub}" "$app" 2>/dev/null || true
     done < "$FLATPAK_STATE"
     echo "${GREEN}[✓] Flatpak applications installed.${RESET}"
   fi

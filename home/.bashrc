@@ -5,6 +5,11 @@
 # Ensure Omarchy systemd user SSH agent socket is connected
 export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"
 
+# Ensure Flatpak applications & AppImages are discovered by desktop launcher
+if [[ -d "/var/lib/flatpak/exports/share" || -d "$HOME/.local/share/flatpak/exports/share" ]]; then
+  export XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}:/var/lib/flatpak/exports/share:${HOME}/.local/share/flatpak/exports/share"
+fi
+
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;

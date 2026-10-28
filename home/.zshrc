@@ -124,10 +124,13 @@ for _zsh_sh in \
 done
 unset _zsh_sh
 
-# ==============================================================================
-# SSH Key Management (Omarchy native systemd user socket)
-# ==============================================================================
+# Ensure Omarchy native systemd user socket
 export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"
+
+# Ensure Flatpak applications & AppImages are discovered by desktop launcher
+if [[ -d "/var/lib/flatpak/exports/share" || -d "$HOME/.local/share/flatpak/exports/share" ]]; then
+  export XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}:/var/lib/flatpak/exports/share:${HOME}/.local/share/flatpak/exports/share"
+fi
 
 
 export PATH="$HOME/.local/bin:$PATH"
