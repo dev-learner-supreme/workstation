@@ -28,13 +28,15 @@ Because `workstation` and your work repositories are private, establish SSH auth
    chmod 600 ~/.ssh/id_ed25519
    chmod 644 ~/.ssh/id_ed25519.pub
    ```
-3. Enable native systemd SSH agent socket, persist to `~/.bashrc`, and add key:
+3. Enable native systemd SSH agent socket, export to your active terminal, and add key:
    ```bash
    systemctl --user enable --now ssh-agent.socket
-   echo 'export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"' >> ~/.bashrc
-   source ~/.bashrc
-   ssh-add ~/.ssh/id_ed25519
+   export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"
+
+   # Verify socket is active before adding key
+   test -S "$SSH_AUTH_SOCK" && ssh-add ~/.ssh/id_ed25519
    ```
+   *(If `test -S` fails, verify socket status with `systemctl --user status ssh-agent.socket` before continuing)*
 4. Verify GitHub connection:
    ```bash
    ssh -T git@github.com
@@ -46,9 +48,8 @@ Because `workstation` and your work repositories are private, establish SSH auth
 mkdir -p ~/.ssh && chmod 700 ~/.ssh
 ssh-keygen -t ed25519 -C "arunraobalappa@gmail.com" -f ~/.ssh/id_ed25519
 systemctl --user enable --now ssh-agent.socket
-echo 'export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"' >> ~/.bashrc
-source ~/.bashrc
-ssh-add ~/.ssh/id_ed25519
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"
+test -S "$SSH_AUTH_SOCK" && ssh-add ~/.ssh/id_ed25519
 wl-copy < ~/.ssh/id_ed25519.pub  # Or cat ~/.ssh/id_ed25519.pub
 ```
 *Add the copied public key to **GitHub → Settings → SSH and GPG keys**, then verify with `ssh -T git@github.com`.*
@@ -191,7 +192,7 @@ Enforced via `/usr/local/sbin/cpu-power-cap` on the Intel Core i5-13500H:
 * **PL1 (Sustained):** 18 W
 * **PL2 (Burst):** 35 W
 * **Tau (Time Window):** 28 seconds
-* **Thermal Ceiling:** Package temperatures remain locked strictly below 83°C under sustained load, preserving battery longevity and quiet fan acoustics.
+* **Thermal Target:** Calibrated operating profile designed to maintain sustained-load package temperatures typically at or below ~83°C under standard ambient conditions, preserving battery longevity and quiet fan acoustics.
 
 ---
 

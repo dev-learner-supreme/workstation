@@ -16,7 +16,7 @@ These instructions apply across all projects, repositories, and operations in th
 * **Organization Repository Isolation (Math-Junior Repos):**
   * `Math-Junior` organization repositories (`ProjectAgri`, `CMS`, `RODO-Website`, `Firebase`, `HWCode`) are shared company repositories.
   * **NEVER stage, commit, or leak personal agent files (`.agents/`, `MEMORY.md`, personal sync scripts, or assistant configurations) into `Math-Junior` repositories.**
-  * All agent learnings, memory, and evolution sync strictly and exclusively to Arun's private repository (`dev-learner-supreme/agents-config`). Repo-specific knowledge is archived privately under `~/.agents/projects/`.
+  * All agent learnings, memory, and evolution sync strictly to Arun's private unified workstation repository (`dev-learner-supreme/workstation` under `agent/`). Repo-specific knowledge is archived privately under `~/.agents/projects/`.
 
 ---
 
@@ -42,7 +42,7 @@ These instructions apply across all projects, repositories, and operations in th
 * **Hardware & Platform Architecture:**
   * **Machine:** Acer Swift Go 14 (`SFG14-71`, Intel Core i5-13500H, 16 GB LPDDR5, 512 GB SSD).
   * **Target (Omarchy 4 Bare-Metal):**
-    * Thermal management is enforced via `/usr/local/sbin/cpu-power-cap` (PL1 18W / PL2 35W / tau 28s) to prevent thermal saturation and lock package temperatures strictly below 83°C.
+    * Thermal management is enforced via `/usr/local/sbin/cpu-power-cap` (PL1 18W / PL2 35W / tau 28s) as a calibrated operating target to prevent thermal saturation, typically maintaining sustained-load package temperatures at or below ~83°C under standard ambient conditions.
     * Memory is managed natively with `zram-generator` (`zstd`), giving an effective ~20–22 GB working memory pool.
     * Storage is managed on Btrfs with zstd compression and async TRIM.
 * **Storage & File Persistence:**

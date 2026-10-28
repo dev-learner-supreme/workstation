@@ -37,18 +37,28 @@ Always watch for and eliminate these 4 common token drains:
 
 ---
 
-## 3. The Continuous Improvement Protocol
+## 3. The Continuous Improvement & Governance Protocol
 
 Whenever a task reveals a friction point, non-obvious setup detail, or user preference:
 
-1. **Identify the Learning:**
+1. **Governance & Autonomy Tiers (Separate Learning from Policy Change):**
+
+   | Change Type | Autonomy Level | Target Location |
+   | :--- | :--- | :--- |
+   | **Operational Facts & Transient State** | Automatic update with dates & evidence | `~/.agents/MEMORY.md` |
+   | **Reusable Skills & Procedures** | Propose focused change, validate against incident, version | `~/.agents/skills/` |
+   | **Global Rules & Safety Boundaries** | Require explicit confirmation before altering governing policy | `~/.agents/AGENTS.md` |
+   | **Command Permissions & Security Access** | Require threat-model review & explicit user authorization | `settings.json` / Whitelist |
+
+2. **Identify the Learning:**
    - E.g.: "Device X requires a specific udev rule", "Gradle task requires in-process compiler", "API endpoint expects snake_case payloads".
-2. **Select the Right Tier:**
+3. **Select the Right Tier:**
    - **Global (`~/.agents/AGENTS.md`):** Cross-cutting behaviors, machine resource caps, user attribution, safety.
    - **Repository (`<repo>/AGENTS.md`):** Framework constraints, architecture patterns (MVVM, NextAuth), environment endpoints.
    - **Skill (`~/.agents/skills/<name>/SKILL.md`):** Multi-step manual workflows or domain procedures (e.g. flashing microcontrollers, running complex E2E tests).
-3. **Persist Immediately:**
-   - Edit the target file during the session. Do not defer or leave it in conversational memory, which evaporates when the session ends.
+4. **Persist & Verify:**
+   - Edit the appropriate target file during the session. Do not defer or leave it in conversational memory, which evaporates when the session ends.
+   - Verify that the updated procedure eliminates friction without introducing contradictory policies.
 
 ---
 
