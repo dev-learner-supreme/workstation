@@ -87,7 +87,7 @@ done
 # ------------------------------------------------------------------------------
 mkdir -p state
 if command -v pacman &>/dev/null; then
-  pacman -Qqe > state/pacman-explicit.txt 2>/dev/null || true
+  pacman -Qqen > state/pacman-explicit.txt 2>/dev/null || true
   pacman -Qqem > state/pacman-foreign.txt 2>/dev/null || true
 fi
 
@@ -139,11 +139,22 @@ git add home system state agent README.md setup.sh sync.sh .gitignore
 # Comprehensive secret pattern detection
 SECRET_PATTERN='-----BEGIN [A-Z ]*PRIVATE KEY-----|"(accessToken|refreshToken|client_secret|apiKey|api_key|password)"|gh[pousr]_[A-Za-z0-9]{30,}|sk-ant-[A-Za-z0-9_-]{20,}|AIzaSy[A-Za-z0-9_-]{33}|xox[baprs]-[A-Za-z0-9]{10,}|glpat-[A-Za-z0-9_-]{20,}'
 
-if git diff --cached | grep -E "$SECRET_PATTERN" >/dev/null 2>&1; then
-  echo "[!] Security Warning: Possible secret, private key, or credential detected in staged changes." >&2
-  echo "    Aborting commit. Staged diff matched secret scanner patterns." >&2
-  git reset -q HEAD --
-  exit 1
+# Fail-closed secret scanner with explicit pattern flag (-e)
+STAGED_DIFF="$(git diff --cached)"
+if [[ -n "$STAGED_DIFF" ]]; then
+  scanner_status=0
+  echo "$STAGED_DIFF" | grep -q -E -e "$SECRET_PATTERN" || scanner_status=$?
+  if [[ "$scanner_status" -eq 0 ]]; then
+    echo "[!] Security Warning: Possible secret, private key, or credential detected in staged changes." >&2
+    echo "    Aborting commit. Staged diff matched secret scanner patterns." >&2
+    git reset -q HEAD --
+    exit 1
+  elif [[ "$scanner_status" -gt 1 ]]; then
+    echo "[!] Security Error: Secret scanner failed with error code $scanner_status." >&2
+    echo "    Aborting commit to prevent accidental credential leak (fail-closed)." >&2
+    git reset -q HEAD --
+    exit 1
+  fi
 fi
 
 # ------------------------------------------------------------------------------

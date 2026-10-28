@@ -108,6 +108,31 @@ Execute these one-time system settings:
 
 ---
 
+### Configuration Backup & Rollback Utility
+
+Every live execution of `setup.sh` generates an isolated, timestamped snapshot directory at:
+```text
+~/.workstation-backup-YYYYMMDD-HHMMSS/
+├── manifest.txt         # Action log: tracks restored dotfiles, replaced configs, and newly created files
+├── home/                # Exact copies of pre-existing dotfiles (symlinks & permissions preserved)
+├── agent-configs/       # Pre-merge copies of Claude Code and Antigravity CLI settings.json
+├── bridges/             # Pre-existing bridge files (~/.cursorrules, ~/CLAUDE.md, etc.)
+└── rollback.sh          # One-click restoration script
+```
+
+#### Executing Rollback:
+```bash
+~/.workstation-backup-<timestamp>/rollback.sh
+```
+
+#### Rollback Scope:
+* **Restores User Files:** Restores all pre-existing user dotfiles, desktop settings, and shell configurations with full permission and symlink fidelity (`cp -a`).
+* **Restores AI Agent Configurations:** Restores pre-merge `~/.claude/settings.json` and `~/.gemini/antigravity-cli/settings.json`.
+* **Cleans Newly Created Files:** Any configuration file or bridge symlink created fresh by `setup.sh` is cleanly removed.
+* **Non-Destructive Boundary:** Rollback deliberately does not remove system pacman packages or alter root systemd power capping services; pacman transactions and root system daemons remain governed strictly by Arch Linux system tools.
+
+---
+
 ## 🏛️ System Architecture & Reference
 
 ### Repository Layout
@@ -186,4 +211,4 @@ To capture state changes (installed packages, desktop tweaks, agent memory) and 
 ~/workstation/sync.sh --push  # Snapshot, commit, and push to origin main
 ```
 
-> **Security Guard:** `sync.sh` contains an automated regex secret scanner that halts commits if private keys, API tokens, or session credentials are detected in staged files.
+> **Security Guard:** `sync.sh` contains an automated regex secret scanner with fail-closed security that inspects staged git diffs (`-e "$SECRET_PATTERN"`). It immediately halts commits and unstages changes if private keys, API tokens, or session credentials are detected, or if scanner evaluation errors.

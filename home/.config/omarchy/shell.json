@@ -14,13 +14,13 @@
           "id": "omarchy.menu"
         },
         {
-          "id": "tornikegomareli.spaces"
-        },
-        {
           "id": "techywilbur.pomodoro",
           "sound": false,
           "overlay": false,
           "focus": 25
+        },
+        {
+          "id": "tornikegomareli.spaces"
         }
       ],
       "center": [

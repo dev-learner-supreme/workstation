@@ -183,3 +183,4 @@ alias cdagri='cd ~/Work/ProjectAgri'
 alias cdcms='cd ~/Work/CMS'
 alias cdweb='cd ~/Work/RODO-Website'
 alias cdfb='cd ~/Work/Firebase'
+export PATH="/home/arun/.local/bin:$PATH"

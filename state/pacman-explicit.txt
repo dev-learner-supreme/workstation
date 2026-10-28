@@ -1,4 +1,5 @@
 alsa-utils
+asdcontrol
 base
 base-devel
 bash-completion
@@ -19,7 +20,11 @@ cups
 cups-filters
 cups-pk-helper
 ddcutil
+docker
+docker-buildx
+docker-compose
 dosfstools
+dotnet-runtime
 dua-cli
 easyeffects
 efibootmgr
@@ -85,7 +90,7 @@ lsp-plugins-lv2
 lua51
 luarocks
 man-db
-micro
+mariadb-libs
 mise-bin
 mkinitcpio
 mpv
@@ -110,9 +115,11 @@ pipewire-alsa
 pipewire-jack
 pipewire-pulse
 plocate
+postgresql-libs
 power-profiles-daemon
 python-gobject
 python-poetry-core
+qemu-user-static-binfmt
 qrencode
 qt6-imageformats
 quickshell
@@ -134,7 +141,6 @@ thermald
 tldr
 tmux
 tobi-try
-tree
 tree-sitter-cli
 ttf-ia-writer
 ttf-jetbrains-mono-nerd-basic
@@ -142,6 +148,7 @@ ttfx
 tzupdate
 udiskie
 ufw
+ufw-docker
 usage
 uwsm
 vpl-gpu-rt
@@ -163,6 +170,4 @@ zbar
 zed
 zoxide
 zram-generator
-zsh
 zsh-autosuggestions
-zsh-syntax-highlighting

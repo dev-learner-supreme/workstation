@@ -9,6 +9,8 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_TS="$(date '+%Y%m%d-%H%M%S')"
 BACKUP_DIR="$HOME/.workstation-backup-$BACKUP_TS"
+MANIFEST="$BACKUP_DIR/manifest.txt"
+ROLLBACK_SCRIPT="$BACKUP_DIR/rollback.sh"
 
 # Styling
 BOLD="$(tput bold 2>/dev/null || echo '')"
@@ -240,10 +242,10 @@ if [[ -d "$REPO_DIR/home" ]]; then
     )
   else
     mkdir -p "$BACKUP_DIR"
-    MANIFEST="$BACKUP_DIR/manifest.txt"
-    ROLLBACK_SCRIPT="$BACKUP_DIR/rollback.sh"
-    echo "# Workstation Backup Manifest ($BACKUP_TS)" > "$MANIFEST"
-    echo "# Generated automatically by setup.sh" >> "$MANIFEST"
+    if [[ ! -f "$MANIFEST" ]]; then
+      echo "# Workstation Backup Manifest ($BACKUP_TS)" > "$MANIFEST"
+      echo "# Generated automatically by setup.sh" >> "$MANIFEST"
+    fi
 
     echo "[+] Backing up existing files and recording rollback manifest..."
 
@@ -253,14 +255,17 @@ if [[ -d "$REPO_DIR/home" ]]; then
         target_file="$HOME/${relpath#./}"
         target_dir="$(dirname "$target_file")"
         
-        # If target exists and differs, record and backup
+        # If target exists, record RESTORE and copy with full fidelity
         if [[ -e "$target_file" || -L "$target_file" ]]; then
           if ! cmp -s "$relpath" "$target_file" 2>/dev/null; then
-            backup_dest="$BACKUP_DIR/${relpath#./}"
+            backup_dest="$BACKUP_DIR/home/${relpath#./}"
             mkdir -p "$(dirname "$backup_dest")"
-            cp -p "$target_file" "$backup_dest"
-            printf "%s\t%s\n" "$target_file" "$backup_dest" >> "$MANIFEST"
+            cp -a "$target_file" "$backup_dest"
+            printf "RESTORE\t%s\t%s\n" "$target_file" "$backup_dest" >> "$MANIFEST"
           fi
+        else
+          # File did not exist before setup; record REMOVE for rollback
+          printf "REMOVE\t%s\t\n" "$target_file" >> "$MANIFEST"
         fi
         
         mkdir -p "$target_dir"
@@ -268,11 +273,13 @@ if [[ -d "$REPO_DIR/home" ]]; then
       done
     )
 
-    # Generate executable rollback script
+    # Generate executable rollback script (reads dynamic manifest)
     cat << 'EOF' > "$ROLLBACK_SCRIPT"
 #!/usr/bin/env bash
 # ==============================================================================
 # Workstation Configuration Rollback
+# Restores user dotfiles, desktop configurations, and AI agent settings
+# to their exact state prior to running setup.sh.
 # ==============================================================================
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -283,20 +290,29 @@ if [[ ! -f "$MANIFEST" ]]; then
   exit 1
 fi
 
-echo "Rolling back modified files from $SCRIPT_DIR..."
-while IFS=$'\t' read -r orig backup; do
-  [[ "$orig" =~ ^# ]] && continue
-  [[ -z "$orig" || -z "$backup" ]] && continue
-  if [[ -f "$backup" ]]; then
-    mkdir -p "$(dirname "$orig")"
-    cp -p --remove-destination "$backup" "$orig"
-    echo "  [✓] Restored $orig"
+echo "Rolling back modified files and configurations using manifest from $SCRIPT_DIR..."
+while IFS=$'\t' read -r action orig backup; do
+  [[ "$action" =~ ^# ]] && continue
+  [[ -z "$action" || -z "$orig" ]] && continue
+  if [[ "$action" == "RESTORE" ]]; then
+    if [[ -e "$backup" || -L "$backup" ]]; then
+      mkdir -p "$(dirname "$orig")"
+      cp -a --remove-destination "$backup" "$orig"
+      echo "  [✓] Restored $orig"
+    else
+      echo "  [!] Warning: Backup file $backup missing; skipping $orig" >&2
+    fi
+  elif [[ "$action" == "REMOVE" ]]; then
+    if [[ -e "$orig" || -L "$orig" ]]; then
+      rm -rf "$orig"
+      echo "  [✓] Removed newly created $orig"
+    fi
   fi
 done < "$MANIFEST"
 echo "Rollback completed successfully."
 EOF
     chmod +x "$ROLLBACK_SCRIPT"
-    echo "${GREEN}[✓] Backup and rollback manifest created at: $BACKUP_DIR${RESET}"
+    echo "${GREEN}[✓] Backup and rollback manifest initialized at: $BACKUP_DIR${RESET}"
 
     # Secure SSH directory and config permissions
     if [[ -d "$HOME/.ssh" ]]; then
@@ -356,26 +372,48 @@ if [[ -d "$AGENT_SOURCE" ]]; then
   else
     echo "[+] Linking $AGENT_TARGET -> $AGENT_SOURCE..."
     mkdir -p "$BACKUP_DIR"
-    if [[ -e "$AGENT_TARGET" && ! -L "$AGENT_TARGET" ]]; then
-      mv "$AGENT_TARGET" "$BACKUP_DIR/agents-pre-link"
+    if [[ ! -f "$MANIFEST" ]]; then
+      echo "# Workstation Backup Manifest ($BACKUP_TS)" > "$MANIFEST"
+      echo "# Generated automatically by setup.sh" >> "$MANIFEST"
+    fi
+
+    if [[ -e "$AGENT_TARGET" || -L "$AGENT_TARGET" ]]; then
+      if [[ "$(readlink "$AGENT_TARGET" 2>/dev/null)" != "$AGENT_SOURCE" ]]; then
+        mkdir -p "$BACKUP_DIR/agent-pre-link"
+        cp -a "$AGENT_TARGET" "$BACKUP_DIR/agent-pre-link/agents"
+        printf "RESTORE\t%s\t%s\n" "$AGENT_TARGET" "$BACKUP_DIR/agent-pre-link/agents" >> "$MANIFEST"
+        rm -rf "$AGENT_TARGET"
+      fi
+    else
+      printf "REMOVE\t%s\t\n" "$AGENT_TARGET" >> "$MANIFEST"
     fi
     ln -sfn "$AGENT_SOURCE" "$AGENT_TARGET"
     echo "${GREEN}[✓] ~/.agents linked to workstation/agent.${RESET}"
 
     # Interoperability symlinks
     echo "[+] Configuring Agent bridges (Cursor, Claude, Gemini, Canonical)..."
-    ln -sfn "$AGENT_TARGET/AGENTS.md" "$HOME/.cursorrules"
-    ln -sfn "$AGENT_TARGET/AGENTS.md" "$HOME/CLAUDE.md"
-    ln -sfn "$AGENT_TARGET/AGENTS.md" "$HOME/GEMINI.md"
-    ln -sfn "$AGENT_TARGET/AGENTS.md" "$HOME/AGENTS.md"
+    for link_target in "$HOME/.cursorrules" "$HOME/CLAUDE.md" "$HOME/GEMINI.md" "$HOME/AGENTS.md"; do
+      if [[ -e "$link_target" || -L "$link_target" ]]; then
+        if [[ "$(readlink "$link_target" 2>/dev/null)" != "$AGENT_TARGET/AGENTS.md" ]]; then
+          bname="$(basename "$link_target")"
+          mkdir -p "$BACKUP_DIR/bridges"
+          cp -a "$link_target" "$BACKUP_DIR/bridges/$bname"
+          printf "RESTORE\t%s\t%s\n" "$link_target" "$BACKUP_DIR/bridges/$bname" >> "$MANIFEST"
+        fi
+      else
+        printf "REMOVE\t%s\t\n" "$link_target" >> "$MANIFEST"
+      fi
+      ln -sfn "$AGENT_TARGET/AGENTS.md" "$link_target"
+    done
 
     # Claude Code settings bridge (Spaces agent-badge hooks)
     if [[ -f "$AGENT_SOURCE/integrations/claude-settings.json" ]]; then
       mkdir -p "$HOME/.claude"
-      if [[ ! -f "$HOME/.claude/settings.json" ]]; then
-        cp "$AGENT_SOURCE/integrations/claude-settings.json" "$HOME/.claude/settings.json"
-        echo "${GREEN}[✓] Claude Code Spaces hooks installed at ~/.claude/settings.json.${RESET}"
-      else
+      claude_settings="$HOME/.claude/settings.json"
+      if [[ -f "$claude_settings" ]]; then
+        mkdir -p "$BACKUP_DIR/agent-configs"
+        cp -a "$claude_settings" "$BACKUP_DIR/agent-configs/claude-settings.json"
+        printf "RESTORE\t%s\t%s\n" "$claude_settings" "$BACKUP_DIR/agent-configs/claude-settings.json" >> "$MANIFEST"
         python3 -c "
 import json, sys
 src, dst = sys.argv[1], sys.argv[2]
@@ -387,8 +425,12 @@ try:
         elif isinstance(v, dict) and isinstance(t[k], dict): t[k].update(v)
     with open(dst, 'w') as f: json.dump(t, f, indent=2)
 except Exception: pass
-" "$AGENT_SOURCE/integrations/claude-settings.json" "$HOME/.claude/settings.json" 2>/dev/null || true
+" "$AGENT_SOURCE/integrations/claude-settings.json" "$claude_settings" 2>/dev/null || true
         echo "${GREEN}[✓] Claude Code Spaces hooks merged into ~/.claude/settings.json.${RESET}"
+      else
+        printf "REMOVE\t%s\t\n" "$claude_settings" >> "$MANIFEST"
+        cp "$AGENT_SOURCE/integrations/claude-settings.json" "$claude_settings"
+        echo "${GREEN}[✓] Claude Code Spaces hooks installed at ~/.claude/settings.json.${RESET}"
       fi
     fi
 
@@ -398,7 +440,11 @@ except Exception: pass
       for skill_dir in "$AGENT_SOURCE/skills/"*; do
         if [[ -d "$skill_dir" ]]; then
           skill_name="$(basename "$skill_dir")"
-          ln -sfn "$skill_dir" "$HOME/.claude/skills/$skill_name"
+          skill_link="$HOME/.claude/skills/$skill_name"
+          if [[ ! -e "$skill_link" && ! -L "$skill_link" ]]; then
+            printf "REMOVE\t%s\t\n" "$skill_link" >> "$MANIFEST"
+          fi
+          ln -sfn "$skill_dir" "$skill_link"
         fi
       done
       echo "${GREEN}[✓] Claude Code skills bridged.${RESET}"
@@ -407,10 +453,11 @@ except Exception: pass
     # Antigravity CLI settings & Command Whitelist bridge
     if [[ -f "$AGENT_SOURCE/integrations/antigravity-settings.json" ]]; then
       mkdir -p "$HOME/.gemini/antigravity-cli"
-      if [[ ! -f "$HOME/.gemini/antigravity-cli/settings.json" ]]; then
-        cp "$AGENT_SOURCE/integrations/antigravity-settings.json" "$HOME/.gemini/antigravity-cli/settings.json"
-        echo "${GREEN}[✓] Antigravity CLI settings & whitelist deployed to ~/.gemini/antigravity-cli/settings.json.${RESET}"
-      else
+      agy_settings="$HOME/.gemini/antigravity-cli/settings.json"
+      if [[ -f "$agy_settings" ]]; then
+        mkdir -p "$BACKUP_DIR/agent-configs"
+        cp -a "$agy_settings" "$BACKUP_DIR/agent-configs/antigravity-settings.json"
+        printf "RESTORE\t%s\t%s\n" "$agy_settings" "$BACKUP_DIR/agent-configs/antigravity-settings.json" >> "$MANIFEST"
         python3 -c "
 import json, sys
 src, dst = sys.argv[1], sys.argv[2]
@@ -426,8 +473,12 @@ try:
                 tp.setdefault(kind, []).append(item)
     with open(dst, 'w') as f: json.dump(t, f, indent=2)
 except Exception: pass
-" "$AGENT_SOURCE/integrations/antigravity-settings.json" "$HOME/.gemini/antigravity-cli/settings.json" 2>/dev/null || true
+" "$AGENT_SOURCE/integrations/antigravity-settings.json" "$agy_settings" 2>/dev/null || true
         echo "${GREEN}[✓] Antigravity CLI whitelist merged into ~/.gemini/antigravity-cli/settings.json.${RESET}"
+      else
+        printf "REMOVE\t%s\t\n" "$agy_settings" >> "$MANIFEST"
+        cp "$AGENT_SOURCE/integrations/antigravity-settings.json" "$agy_settings"
+        echo "${GREEN}[✓] Antigravity CLI settings & whitelist deployed to ~/.gemini/antigravity-cli/settings.json.${RESET}"
       fi
     fi
   fi
@@ -471,29 +522,53 @@ if command -v omarchy &>/dev/null; then
       echo "    [DRY-RUN] Would disable redundant omarchy.workspaces"
     else
       echo "[+] Installing and pinning Omarchy shell plugins..."
-      
-      # Spaces plugin
-      if ! omarchy plugin list 2>/dev/null | grep -q "tornikegomareli.spaces"; then
-        echo "    -> Adding Spaces plugin..."
-        omarchy plugin add https://github.com/tornikegomareli/omarchy-spaces.git --enable --yes 2>/dev/null || true
-      fi
-      if [[ -d "$HOME/.config/omarchy/plugins/tornikegomareli.spaces" ]]; then
-        git -C "$HOME/.config/omarchy/plugins/tornikegomareli.spaces" checkout -q "$SPACES_COMMIT" 2>/dev/null || true
-        echo "    [✓] Spaces plugin pinned to verified commit ($SPACES_COMMIT)."
-      fi
 
-      # Pomodoro plugin
-      if ! omarchy plugin list 2>/dev/null | grep -q "techywilbur.pomodoro"; then
-        echo "    -> Adding Pomodoro plugin..."
-        omarchy plugin add https://github.com/techywilbur/omarchy-pomodoro.git --enable --yes 2>/dev/null || true
-      fi
-      if [[ -d "$HOME/.config/omarchy/plugins/techywilbur.pomodoro" ]]; then
-        git -C "$HOME/.config/omarchy/plugins/techywilbur.pomodoro" checkout -q "$POMO_COMMIT" 2>/dev/null || true
-        echo "    [✓] Pomodoro plugin pinned to verified commit ($POMO_COMMIT)."
-      fi
+      pin_omarchy_plugin() {
+        local name="$1"
+        local repo_url="$2"
+        local expected_commit="$3"
+        local plugin_dir="$HOME/.config/omarchy/plugins/$name"
 
-      omarchy plugin disable omarchy.workspaces 2>/dev/null || true
-      echo "${GREEN}[✓] Omarchy native plugins configured and securely pinned.${RESET}"
+        if ! omarchy plugin list 2>/dev/null | grep -q "$name"; then
+          echo "    -> Installing $name from $repo_url..."
+          if ! omarchy plugin add "$repo_url" --enable --yes; then
+            echo "    ${RED}[!] Error: Failed to add plugin $name via omarchy plugin add.${RESET}" >&2
+            return 1
+          fi
+        fi
+
+        if [[ ! -d "$plugin_dir" ]]; then
+          echo "    ${RED}[!] Error: Plugin directory $plugin_dir not found.${RESET}" >&2
+          return 1
+        fi
+
+        echo "    -> Pinning $name to commit $expected_commit..."
+        if ! git -C "$plugin_dir" checkout -q "$expected_commit"; then
+          echo "    ${RED}[!] Error: Failed to checkout commit $expected_commit in $plugin_dir.${RESET}" >&2
+          return 1
+        fi
+
+        local actual_commit
+        actual_commit="$(git -C "$plugin_dir" rev-parse HEAD 2>/dev/null || echo '')"
+        if [[ "$actual_commit" != "$expected_commit" ]]; then
+          echo "    ${RED}[!] Error: Plugin $name commit verification mismatch (expected $expected_commit, got $actual_commit).${RESET}" >&2
+          return 1
+        fi
+
+        echo "    ${GREEN}[✓] $name verified at pinned commit (${expected_commit:0:7}).${RESET}"
+        return 0
+      }
+
+      plugin_err=0
+      pin_omarchy_plugin "tornikegomareli.spaces" "https://github.com/tornikegomareli/omarchy-spaces.git" "$SPACES_COMMIT" || plugin_err=1
+      pin_omarchy_plugin "techywilbur.pomodoro" "https://github.com/techywilbur/omarchy-pomodoro.git" "$POMO_COMMIT" || plugin_err=1
+
+      if [[ "$plugin_err" -eq 0 ]]; then
+        omarchy plugin disable omarchy.workspaces 2>/dev/null || true
+        echo "${GREEN}[✓] Omarchy native plugins configured and securely pinned.${RESET}"
+      else
+        echo "${RED}[!] Warning: One or more Omarchy plugins failed checkout/verification.${RESET}" >&2
+      fi
     fi
   else
     echo "${YELLOW}[!] Skipping third-party Omarchy plugin installation.${RESET}"
