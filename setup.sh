@@ -514,6 +514,14 @@ except Exception: pass
         echo "${GREEN}[✓] Antigravity CLI settings & whitelist deployed to ~/.gemini/antigravity-cli/settings.json.${RESET}"
       fi
     fi
+
+    # Antigravity CLI lifecycle hooks & J.A.R.V.I.S. session init
+    if [[ -f "$AGENT_SOURCE/hooks.json" ]]; then
+      mkdir -p "$HOME/.gemini/config"
+      ln -sfn "$AGENT_TARGET/hooks.json" "$HOME/.gemini/config/hooks.json"
+      chmod +x "$AGENT_SOURCE/scripts/"*.py 2>/dev/null || true
+      echo "${GREEN}[✓] Antigravity CLI lifecycle hooks bridged to ~/.gemini/config/hooks.json.${RESET}"
+    fi
   fi
 fi
 
