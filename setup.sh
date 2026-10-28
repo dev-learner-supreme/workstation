@@ -57,7 +57,7 @@ echo ""
 if [[ "${1:-}" != "--auto" && "${1:-}" != "-y" ]]; then
   read -r -p "${BOLD}Proceed with system and dotfile configuration? [Y/n]: ${RESET}" PROCEED_INPUT
   PROCEED_INPUT="${PROCEED_INPUT:-Y}"
-  if [[ ! "$PROCEED_INPUT" =~ ^[Yy]$ ]]; then
+  if [[ ! "$PROCEED_INPUT" =~ ^[Yy]([Ee][Ss])?$ ]]; then
     echo "Configuration aborted by user."
     exit 0
   fi
@@ -81,7 +81,7 @@ if [[ -d "$REPO_DIR/system" ]]; then
   if [[ -d "$REPO_DIR/system/usr/local/sbin" ]]; then
     sudo mkdir -p /usr/local/sbin
     sudo cp -v "$REPO_DIR/system/usr/local/sbin/"* /usr/local/sbin/
-    sudo chmod 755 /usr/local/sbin/cpu-power-cap* 2>/dev/null || true
+    sudo chmod 755 /usr/local/sbin/cpu-power-* 2>/dev/null || true
   fi
 
   if [[ -d "$REPO_DIR/system/etc/systemd/system" ]]; then
@@ -89,7 +89,7 @@ if [[ -d "$REPO_DIR/system" ]]; then
     sudo cp -v "$REPO_DIR/system/etc/systemd/system/"* /etc/systemd/system/
     
     echo "[+] Reloading systemd daemons and enabling power services..."
-    sudo systemctl daemon-reload
+    sudo systemctl daemon-reload || true
     sudo systemctl enable --now cpu-power-cap.timer cpu-power-stats.timer cpu-power-cap.service || true
   fi
   echo "${GREEN}[✓] System power capping applied.${RESET}"
@@ -103,7 +103,11 @@ fi
 echo ""
 echo "${BOLD}${YELLOW}--- [3/5] Hardware Groups Configuration ---${RESET}"
 echo "[+] Adding user '$USER' to 'uucp' (ESP32/Arduino) and 'dialout'..."
-sudo usermod -aG uucp,dialout "$USER" || true
+for grp in uucp dialout; do
+  if getent group "$grp" >/dev/null; then
+    sudo usermod -aG "$grp" "$USER" || true
+  fi
+done
 echo "${GREEN}[✓] Hardware group permissions configured.${RESET}"
 
 # ==============================================================================
@@ -130,9 +134,15 @@ if [[ -d "$REPO_DIR/home" ]]; then
       fi
       
       mkdir -p "$target_dir"
-      cp -p "$relpath" "$target_file"
+      cp -p --remove-destination "$relpath" "$target_file"
     done
   )
+
+  # Secure SSH directory and config permissions
+  if [[ -d "$HOME/.ssh" ]]; then
+    chmod 700 "$HOME/.ssh" 2>/dev/null || true
+    [[ -f "$HOME/.ssh/config" ]] && chmod 600 "$HOME/.ssh/config" 2>/dev/null || true
+  fi
 
   # Make executables in .local/bin executable
   if [[ -d "$HOME/.local/bin" ]]; then
@@ -155,6 +165,7 @@ AGENT_TARGET="$HOME/.agents"
 
 if [[ -d "$AGENT_SOURCE" ]]; then
   echo "[+] Linking $AGENT_TARGET -> $AGENT_SOURCE..."
+  mkdir -p "$BACKUP_DIR"
   if [[ -e "$AGENT_TARGET" && ! -L "$AGENT_TARGET" ]]; then
     mv "$AGENT_TARGET" "$BACKUP_DIR/agents-pre-link"
   fi

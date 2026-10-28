@@ -78,18 +78,30 @@ if command -v eza &>/dev/null; then
 fi
 
 # ==============================================================================
-# Plugins (Installed via apt)
+# Plugins (Arch Linux / Debian / Ubuntu)
 # ==============================================================================
 # Autosuggestions (press Right Arrow to accept suggestion)
-if [ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
-  source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-  ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-fi
+for _zsh_as in \
+  /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh \
+  /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh; do
+  if [ -f "$_zsh_as" ]; then
+    source "$_zsh_as"
+    ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+    break
+  fi
+done
+unset _zsh_as
 
 # Syntax Highlighting (MUST be sourced near the end)
-if [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
-  source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-fi
+for _zsh_sh in \
+  /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+  /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
+  if [ -f "$_zsh_sh" ]; then
+    source "$_zsh_sh"
+    break
+  fi
+done
+unset _zsh_sh
 
 # ==============================================================================
 # SSH Key Management (Keychain)
@@ -100,7 +112,7 @@ if command -v keychain &>/dev/null; then
 fi
 
 
-export PATH="/home/arun/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 # Android SDK & Platform Tools
 export ANDROID_HOME="$HOME/Android/Sdk"
@@ -115,13 +127,13 @@ fi
 
 
 # The next line updates PATH for the Google Cloud SDK.
-if [ -f '/home/arun/Work/google-cloud-sdk/path.zsh.inc' ]; then . '/home/arun/Work/google-cloud-sdk/path.zsh.inc'; fi
+if [ -f "$HOME/Work/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/Work/google-cloud-sdk/path.zsh.inc"; fi
 
 # The next line enables shell command completion for gcloud.
-if [ -f '/home/arun/Work/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/arun/Work/google-cloud-sdk/completion.zsh.inc'; fi
+if [ -f "$HOME/Work/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/Work/google-cloud-sdk/completion.zsh.inc"; fi
 
 # fnm
-FNM_PATH="/home/arun/.local/share/fnm"
+FNM_PATH="$HOME/.local/share/fnm"
 if [ -d "$FNM_PATH" ]; then
   export PATH="$FNM_PATH:$PATH"
   eval "$(fnm env --shell zsh)"
