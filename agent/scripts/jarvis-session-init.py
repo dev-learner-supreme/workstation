@@ -139,6 +139,24 @@ def main():
         print(banner)
         return
 
+    # Deduplicate hook execution per conversation session
+    if stdin_data:
+        try:
+            payload = json.loads(stdin_data)
+            conv_id = payload.get("conversationId")
+            if conv_id:
+                uid = os.getuid()
+                runtime_dir = f"/run/user/{uid}" if os.path.isdir(f"/run/user/{uid}") else "/tmp"
+                lock_file = os.path.join(runtime_dir, f"jarvis_session_{conv_id}.lock")
+                if os.path.exists(lock_file):
+                    # Already injected for this session start
+                    print(json.dumps({"injectSteps": []}))
+                    return
+                with open(lock_file, "w", encoding="utf-8") as f:
+                    f.write(str(os.getpid()))
+        except Exception:
+            pass
+
     # Format JSON response according to Antigravity SessionStart hook contract
     # NOTE: Do NOT use "metadata" field because agy's ScrubInternalFields currently
     # panics with "type mismatch: cannot convert string to message" when traversing map values.
