@@ -139,19 +139,18 @@ def main():
         print(banner)
         return
 
-    # Otherwise format JSON response according to Antigravity SessionStart hook contract
+    # Format JSON response according to Antigravity SessionStart hook contract
+    # NOTE: Do NOT use "metadata" field because agy's ScrubInternalFields currently
+    # panics with "type mismatch: cannot convert string to message" when traversing map values.
     response = {
         "injectSteps": [
             {
                 "systemMessage": {
                     "systemMessage": (
-                        "J.A.R.V.I.S. PROTOCOL ENGAGED: Workspace rules, skills, and hardware telemetry verified nominal. "
-                        "On session start, /clear, or /resume: consolidate important session learnings into MEMORY.md and present "
-                        "the live J.A.R.V.I.S. status report."
-                    ),
-                    "metadata": {
-                        "user_markdown": banner
-                    }
+                        "J.A.R.V.I.S. PROTOCOL ENGAGED: Workspace rules, skills, and hardware telemetry verified nominal.\n"
+                        "On turn 1 of every session, after /clear, or upon /resume: ALWAYS confirm J.A.R.V.I.S. operational "
+                        "status with the canonical ASCII banner and live telemetry matrix, and consolidate previous session data."
+                    )
                 }
             }
         ]

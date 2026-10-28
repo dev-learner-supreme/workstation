@@ -3,6 +3,7 @@
     "allow": [
       "command(./setup.sh)",
       "command(./sync.sh)",
+      "command(/home/arun/.agents/scripts/jarvis-session-init.py)",
       "command(/home/arun/workstation/agent/scripts/jarvis-session-init.py)",
       "command(/home/arun/workstation/agent/skills/agent-health-check/scripts/doctor.sh)",
       "command(/home/arun/workstation/setup.sh)",
@@ -21,6 +22,7 @@
       "command(easyeffects)",
       "command(echo)",
       "command(find /home/arun/workstation/home -type f)",
+      "command(find ~/.gemini ~/.agents -name \"*hook*\")",
       "command(find ~/.gemini ~/.agents ~/workstation -name \"hooks.json\" 2>/dev/null)",
       "command(flatpak)",
       "command(free)",
@@ -50,6 +52,8 @@
       "command(snapper)",
       "command(ssh)",
       "command(ssh-add)",
+      "command(strings $(which agy) | grep -C 5 \"user_markdown\")",
+      "command(strings $(which agy) | grep -E \"SessionStartResponse|InjectStep|SystemMessage\")",
       "command(sudo cryptsetup)",
       "command(sudo pacman)",
       "command(sudo systemctl)",
@@ -60,7 +64,8 @@
       "command(which)",
       "command(wpctl)",
       "command(yay)",
-      "command(zsh)"
+      "command(zsh)",
+      "command(~/.agents/sync.sh)"
     ],
     "ask": [
       "command(rm)"
