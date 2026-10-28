@@ -596,9 +596,15 @@ if command -v omarchy &>/dev/null; then
 
         # 5. Enable the plugin ONLY AFTER verification succeeds
         echo "    -> Integrity verified. Enabling $name..."
-        if ! omarchy plugin enable "$name"; then
-          echo "    ${RED}[!] Error: Failed to enable plugin $name after verification.${RESET}" >&2
-          return 1
+        omarchy-shell shell rescanPlugins 2>/dev/null || true
+        if ! omarchy plugin enable "$name" 2>/dev/null; then
+          # Rescan fallback and retry once
+          omarchy-shell shell rescanPlugins 2>/dev/null || true
+          sleep 1
+          if ! omarchy plugin enable "$name"; then
+            echo "    ${RED}[!] Error: Failed to enable plugin $name after verification.${RESET}" >&2
+            return 1
+          fi
         fi
 
         echo "    ${GREEN}[✓] $name verified at commit (${expected_commit:0:7}) and enabled.${RESET}"
