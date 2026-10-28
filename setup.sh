@@ -99,10 +99,16 @@ if [[ -f "$FLATPAK_STATE" && -s "$FLATPAK_STATE" ]] && command -v flatpak &>/dev
     flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
     while IFS=$'\t' read -r app origin; do
       [[ -z "$app" ]] && continue
-      echo "[+] Installing flatpak: $app..."
-      flatpak --user install -y --noninteractive "${origin:-flathub}" "$app" 2>/dev/null || flatpak install -y --noninteractive "${origin:-flathub}" "$app" 2>/dev/null || true
+      echo "[+] Checking flatpak: $app..."
+      if flatpak info "$app" &>/dev/null; then
+        echo "    [✓] $app already installed."
+      else
+        echo "    -> Installing $app from ${origin:-flathub}..."
+        flatpak --user install -y --noninteractive "${origin:-flathub}" "$app" 2>/dev/null || \
+        sudo flatpak install -y --noninteractive "${origin:-flathub}" "$app" 2>/dev/null || true
+      fi
     done < "$FLATPAK_STATE"
-    echo "${GREEN}[✓] Flatpak applications installed.${RESET}"
+    echo "${GREEN}[✓] Flatpak applications verified/installed.${RESET}"
   fi
 fi
 
@@ -280,8 +286,69 @@ except Exception: pass
         ln -sfn "$skill_dir" "$HOME/.claude/skills/$skill_name"
       fi
     done
-    echo "${GREEN}[✓] Agent skills bridged to Claude Code.${RESET}"
+    echo "${GREEN}[✓] Claude Code skills bridged.${RESET}"
   fi
+
+  # Antigravity CLI settings & Command Whitelist bridge
+  if [[ -f "$AGENT_SOURCE/integrations/antigravity-settings.json" ]]; then
+    mkdir -p "$HOME/.gemini/antigravity-cli"
+    if [[ ! -f "$HOME/.gemini/antigravity-cli/settings.json" ]]; then
+      cp "$AGENT_SOURCE/integrations/antigravity-settings.json" "$HOME/.gemini/antigravity-cli/settings.json"
+      echo "${GREEN}[✓] Antigravity CLI settings & whitelist deployed to ~/.gemini/antigravity-cli/settings.json.${RESET}"
+    else
+      # Safely merge whitelist without dropping user preferences
+      python3 -c "
+import json, sys
+src, dst = sys.argv[1], sys.argv[2]
+try:
+    with open(src) as f: b = json.load(f)
+    with open(dst) as f: t = json.load(f)
+    bp = b.get('permissions', {})
+    tp = t.setdefault('permissions', {})
+    for kind in ('allow', 'ask', 'deny'):
+        existing = set(tp.get(kind, []))
+        for item in bp.get(kind, []):
+            if item not in existing:
+                tp.setdefault(kind, []).append(item)
+    with open(dst, 'w') as f: json.dump(t, f, indent=2)
+except Exception: pass
+" "$AGENT_SOURCE/integrations/antigravity-settings.json" "$HOME/.gemini/antigravity-cli/settings.json" 2>/dev/null || true
+      echo "${GREEN}[✓] Antigravity CLI whitelist merged into ~/.gemini/antigravity-cli/settings.json.${RESET}"
+    fi
+  fi
+fi
+
+# ==============================================================================
+# 6. Omarchy Native Integrations & Plugins
+# ==============================================================================
+if command -v omarchy &>/dev/null; then
+  echo ""
+  echo "${BOLD}${YELLOW}--- [6/6] Omarchy Native Integrations & Plugins ---${RESET}"
+
+  # Set balanced AC power profile
+  if command -v omarchy-powerprofiles-set &>/dev/null; then
+    echo "[+] Setting AC power profile to balanced..."
+    omarchy-powerprofiles-set ac balanced 2>/dev/null || true
+  fi
+
+  # Automated Shell Plugins Installation
+  echo "[+] Configuring Omarchy shell plugins (Spaces & Pomodoro)..."
+  if ! omarchy plugin list 2>/dev/null | grep -q "tornikegomareli.spaces"; then
+    echo "    -> Installing Spaces plugin non-interactively..."
+    omarchy plugin add https://github.com/tornikegomareli/omarchy-spaces.git --enable --yes 2>/dev/null || true
+  else
+    echo "    [✓] Spaces plugin already installed."
+  fi
+
+  if ! omarchy plugin list 2>/dev/null | grep -q "techywilbur.pomodoro"; then
+    echo "    -> Installing Pomodoro plugin non-interactively..."
+    omarchy plugin add https://github.com/techywilbur/omarchy-pomodoro.git --enable --yes 2>/dev/null || true
+  else
+    echo "    [✓] Pomodoro plugin already installed."
+  fi
+
+  omarchy plugin disable omarchy.workspaces 2>/dev/null || true
+  echo "${GREEN}[✓] Omarchy native plugins and profiles configured.${RESET}"
 fi
 
 # ==============================================================================
@@ -290,25 +357,17 @@ fi
 echo ""
 echo "${BOLD}${GREEN}=== Setup Complete ===${RESET}"
 echo ""
-echo "${BOLD}Important One-Time Manual Steps (Run as needed):${RESET}"
-echo "  1. ${BOLD}TRIM on LUKS2:${RESET}"
+echo "${BOLD}Important Post-Install Verification & Steps:${RESET}"
+echo "  1. ${BOLD}TRIM on LUKS2 (If newly formatted SSD):${RESET}"
 echo "     sudo cryptsetup refresh --allow-discards --persistent root"
 echo ""
-echo "  2. ${BOLD}Omarchy Spaces & Pomodoro Plugins:${RESET}"
-echo "     omarchy plugin add https://github.com/tornikegomareli/omarchy-spaces.git --enable"
-echo "     omarchy plugin add https://github.com/techywilbur/omarchy-pomodoro.git --enable"
-echo "     omarchy plugin disable omarchy.workspaces"
+echo "  2. ${BOLD}SSH Authentication:${RESET}"
+echo "     ssh-add ~/.ssh/id_ed25519 (ssh-agent.socket is active)"
 echo ""
-echo "  3. ${BOLD}Power Profile (AC Balanced):${RESET}"
-echo "     omarchy-powerprofiles-set ac balanced"
+echo "  3. ${BOLD}Restart Session:${RESET}"
+echo "     Log out and log back in to apply hardware group changes ('uucp') and Hyprland bindings."
 echo ""
-echo "  4. ${BOLD}SSH Authentication:${RESET}"
-echo "     ssh-add ~/.ssh/id_ed25519 (ssh-agent.socket enabled automatically)"
-echo ""
-echo "  5. ${BOLD}Restart Session:${RESET}"
-echo "     Log out and log back in to apply group changes ('uucp') and Hyprland bindings."
-echo ""
-echo "  6. ${BOLD}Shell & Terminal Architecture:${RESET}"
+echo "  4. ${BOLD}Shell Architecture:${RESET}"
 echo "     Foot terminal launches Zsh directly with size 13 font."
 echo "     System login shell is intentionally preserved as Bash to safeguard Omarchy OS stability."
 echo ""

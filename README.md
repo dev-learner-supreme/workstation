@@ -69,39 +69,42 @@ cd ~/workstation
 ```
 
 #### What `setup.sh` Automates:
-* **Package Installation:** Prompts and installs all official packages (`pacman-explicit.txt`), AUR packages (`pacman-foreign.txt`), and Flatpaks (`flatpak.txt`).
+* **Package Installation:** Prompts and installs all official packages (`pacman-explicit.txt`), AUR packages (`pacman-foreign.txt`), and Flatpaks (`flatpak.txt` via non-interactive user remote).
 * **Root Power Capping:** Deploys `/etc/default/cpu-power-cap` and `/usr/local/sbin/cpu-power-*`, then enables `cpu-power-cap.timer` and `cpu-power-stats.timer`.
 * **Hardware Permissions:** Adds user to `uucp` and `dialout` groups for direct ESP32/serial access.
 * **Desktop & Dotfiles:** Restores configs from `home/` to `$HOME` with automatic backup of pre-existing files. Configures Foot terminal with `shell=/usr/bin/zsh` and readable font sizing (13pt) on 2.8K OLED.
 * **Safe Shell Architecture:** Preserves `/bin/bash` as system login shell for Omarchy OS stability while granting an interactive Zsh experience with `omarchy-zsh`, `fzf`, `zoxide`, `eza`, `starship`, and syntax highlighting.
 * **SSH Integration:** Deploys `~/.config/environment.d/ssh-agent.conf`, sets `AddKeysToAgent yes`, and live-exports `SSH_AUTH_SOCK`.
-* **Agent Brain & Bridges:** Symlinks `~/.agents -> ~/workstation/agent`, connects Cursor (`~/.cursorrules`) and Claude Code (`~/CLAUDE.md`), installs all skills, and injects Spaces hooks into `~/.claude/settings.json`.
+* **Agent Brain & Bridges:** Symlinks `~/.agents -> ~/workstation/agent`, connects Cursor (`~/.cursorrules`), Claude Code (`~/CLAUDE.md`), and Antigravity CLI (`~/.gemini/antigravity-cli/settings.json` with permissions whitelist), installs all skills, and injects Spaces hooks into `~/.claude/settings.json`.
+* **Omarchy Shell Plugins & Profiles:** Automatically installs and enables Spaces (`tornikegomareli.spaces`) and Pomodoro (`techywilbur.pomodoro`), disables redundant default workspaces, and sets AC power profile to balanced.
 
 ---
 
-### Step 4: Post-Install Manual Steps
+### Step 4: Post-Install Verification & Activation
 
 Execute these one-time system settings:
 
-1. **Enable TRIM on LUKS2:**
+1. **Enable TRIM on LUKS2 (If newly formatted SSD):**
    ```bash
    sudo cryptsetup refresh --allow-discards --persistent root
    ```
 
-2. **Install Spaces & Pomodoro Bar Plugins:**
+2. **Unlock SSH Key into Active Agent:**
    ```bash
-   omarchy plugin add https://github.com/tornikegomareli/omarchy-spaces.git --enable
-   omarchy plugin add https://github.com/techywilbur/omarchy-pomodoro.git --enable
-   omarchy plugin disable omarchy.workspaces
+   ssh-add ~/.ssh/id_ed25519
    ```
 
-3. **Set Balanced AC Power Profile:**
-   ```bash
-   omarchy-powerprofiles-set ac balanced
-   ```
-
-4. **Restart Session:**
+3. **Restart Session:**
    * Log out and log back in (or reboot) to apply hardware group permissions (`uucp`) and Hyprland keybindings.
+
+4. **Verify Health Telemetry:**
+   ```bash
+   # Agent doctor diagnostic
+   ~/.agents/skills/agent-health-check/scripts/doctor.sh
+
+   # Full Omarchy OS hardware & software diagnostic
+   ~/.agents/skills/omarchy-health/omarchy-health.sh
+   ```
 
 ---
 

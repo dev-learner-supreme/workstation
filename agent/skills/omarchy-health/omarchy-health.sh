@@ -150,11 +150,13 @@ pgrep -x easyeffects >/dev/null && OK "EasyEffects running" || FAIL "EasyEffects
 grep -q -- '--hide-window' "$HOME/.config/autostart/easyeffects-service.desktop" 2>/dev/null && OK "EasyEffects autostart (hidden)" || WARN "EasyEffects autostart entry missing or not hidden"
 sink=$(pactl get-default-sink 2>/dev/null)
 echo "  default output: $sink"
-pre=$(easyeffects -a output 2>/dev/null | head -1)
-case $sink in
-  *Speaker__sink) [[ $pre == "Advanced Auto Gain" ]] && OK "speakers use Advanced Auto Gain" || WARN "speakers use preset '$pre' (expected Advanced Auto Gain)" ;;
-  *) [[ $pre == Flat ]] && OK "non-speaker output uses Flat" || WARN "output uses preset '$pre' (expected Flat)" ;;
-esac
+if systemctl --user is-active --quiet 'app-easyeffects\x2dservice@autostart.service' 2>/dev/null; then
+  pre=$(timeout 2 easyeffects -a output 2>/dev/null | head -1)
+  case $sink in
+    *Speaker__sink) [[ $pre == "Advanced Auto Gain" ]] && OK "speakers use Advanced Auto Gain" || WARN "speakers use preset '$pre' (expected Advanced Auto Gain)" ;;
+    *) [[ $pre == Flat ]] && OK "non-speaker output uses Flat" || WARN "output uses preset '$pre' (expected Flat)" ;;
+  esac
+fi
 check "WirePlumber output-priority config present" test -f "$HOME/.config/wireplumber/wireplumber.conf.d/60-output-priority.conf"
 check "WirePlumber priority-reset script present" test -f "$HOME/.local/share/wireplumber/scripts/output-priority-reset.lua"
 journalctl --user -b -u wireplumber --no-pager -q 2>/dev/null | grep -iE 'output-priority' | grep -iqE 'error|fail' &&

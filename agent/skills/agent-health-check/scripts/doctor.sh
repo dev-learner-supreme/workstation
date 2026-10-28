@@ -6,6 +6,9 @@
 
 set -u
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+
 PASS_COUNT=0
 WARN_COUNT=0
 FAIL_COUNT=0
@@ -94,7 +97,12 @@ done
 echo ""
 echo "2. Context, Rules & Memory Integrity:"
 
-AGENTS_FILE="$HOME/.agents/AGENTS.md"
+AGENTS_DIR="$HOME/.agents"
+if [ ! -d "$AGENTS_DIR" ] && [ -d "$REPO_DIR/agent" ]; then
+  AGENTS_DIR="$REPO_DIR/agent"
+fi
+
+AGENTS_FILE="$AGENTS_DIR/AGENTS.md"
 if [ -f "$AGENTS_FILE" ]; then
   BYTES=$(wc -c < "$AGENTS_FILE" | tr -d ' ')
   if [ "$BYTES" -lt 20000 ]; then
@@ -103,11 +111,11 @@ if [ -f "$AGENTS_FILE" ]; then
     check_warn "AGENTS.md size ($BYTES bytes) approaching 24KB budget"
   fi
 else
-  check_fail "Master AGENTS.md missing from ~/.agents/"
+  check_fail "Master AGENTS.md missing from $AGENTS_DIR"
 fi
 
 # Check MEMORY.md pruning threshold
-MEMORY_FILE="$HOME/.agents/MEMORY.md"
+MEMORY_FILE="$AGENTS_DIR/MEMORY.md"
 if [ -f "$MEMORY_FILE" ]; then
   LINES=$(wc -l < "$MEMORY_FILE" | tr -d ' ')
   if [ "$LINES" -lt 250 ]; then
@@ -116,7 +124,7 @@ if [ -f "$MEMORY_FILE" ]; then
     check_warn "MEMORY.md length ($LINES lines) exceeds 250 lines; pruning recommended"
   fi
 else
-  check_warn "MEMORY.md missing from ~/.agents/"
+  check_warn "MEMORY.md missing from $AGENTS_DIR"
 fi
 
 # Check canonical symlinks deduplication
@@ -170,23 +178,23 @@ done
 echo ""
 echo "4. Remote Sync & Disaster Recovery:"
 
-if [ -d "$HOME/.agents/.git" ] || git -C "$HOME/.agents" rev-parse --is-inside-work-tree &>/dev/null; then
-  check_pass "~/.agents repository tracked and active"
-  REMOTE_URL=$(git -C "$HOME/.agents" remote get-url origin 2>/dev/null || echo "")
+if [ -d "$AGENTS_DIR/.git" ] || git -C "$AGENTS_DIR" rev-parse --is-inside-work-tree &>/dev/null; then
+  check_pass "$AGENTS_DIR repository tracked and active"
+  REMOTE_URL=$(git -C "$AGENTS_DIR" remote get-url origin 2>/dev/null || echo "")
   if [ -n "$REMOTE_URL" ]; then
     check_pass "Private remote linked: $REMOTE_URL"
   else
-    check_warn "No remote origin configured in ~/.agents"
+    check_warn "No remote origin configured in $AGENTS_DIR"
   fi
 
   # Check working tree cleanliness
-  if git -C "$HOME/.agents" diff-index --quiet HEAD -- 2>/dev/null; then
+  if git -C "$AGENTS_DIR" diff-index --quiet HEAD -- 2>/dev/null; then
     check_pass "Working directory is clean (all rules committed)"
   else
     check_warn "Uncommitted changes exist in repository"
   fi
 else
-  check_fail "~/.agents is not tracked by Git"
+  check_fail "$AGENTS_DIR is not tracked by Git"
 fi
 
 # ------------------------------------------------------------------------------

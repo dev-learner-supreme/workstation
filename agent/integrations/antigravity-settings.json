@@ -1,0 +1,57 @@
+{
+  "permissions": {
+    "allow": [
+      "command(git)",
+      "command(omarchy)",
+      "command(pacman)",
+      "command(yay)",
+      "command(flatpak)",
+      "command(systemctl)",
+      "command(journalctl)",
+      "command(cp)",
+      "command(mv)",
+      "command(ln)",
+      "command(mkdir)",
+      "command(ls)",
+      "command(cat)",
+      "command(sed)",
+      "command(awk)",
+      "command(grep)",
+      "command(df)",
+      "command(free)",
+      "command(ps)",
+      "command(kill)",
+      "command(bash)",
+      "command(zsh)",
+      "command(python3)",
+      "command(node)",
+      "command(npm)",
+      "command(ssh)",
+      "command(ssh-add)",
+      "command(cryptsetup)",
+      "command(snapper)",
+      "command(btrfs)",
+      "command(easyeffects)",
+      "command(pactl)",
+      "command(wpctl)",
+      "command(iw)",
+      "command(nmcli)",
+      "command(tailscale)",
+      "command(timedatectl)",
+      "command(rfkill)",
+      "command(sudo pacman)",
+      "command(sudo systemctl)",
+      "command(sudo cryptsetup)",
+      "command(./setup.sh)",
+      "command(./sync.sh)"
+    ],
+    "ask": [
+      "command(rm)"
+    ],
+    "deny": [
+      "command(rm -rf /)",
+      "command(mkfs)",
+      "command(dd if=/dev/zero of=/dev/nvme*)"
+    ]
+  }
+}

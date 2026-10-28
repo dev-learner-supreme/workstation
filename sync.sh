@@ -97,11 +97,33 @@ if command -v omarchy &>/dev/null; then
 fi
 
 # ------------------------------------------------------------------------------
-# 4. Synchronize Agent Intelligence
+# 4. Synchronize Agent Intelligence & Command Whitelist
 # ------------------------------------------------------------------------------
 # If ~/.agents is NOT a symlink to agent/, sync any changes into agent/
 if [[ -d "$HOME/.agents" && ! -L "$HOME/.agents" ]]; then
   rsync -av --exclude='.git' "$HOME/.agents/" "$REPO_DIR/agent/"
+fi
+
+# Capture Antigravity CLI whitelist & permissions
+if [[ -f "$HOME/.gemini/antigravity-cli/settings.json" ]]; then
+  mkdir -p "$REPO_DIR/agent/integrations"
+  python3 -c "
+import json, os, sys
+live = os.path.expanduser('~/.gemini/antigravity-cli/settings.json')
+repo = '$REPO_DIR/agent/integrations/antigravity-settings.json'
+try:
+    with open(live) as f: l = json.load(f)
+    r = {}
+    if os.path.exists(repo):
+        with open(repo) as f: r = json.load(f)
+    lp = l.get('permissions', {})
+    rp = r.setdefault('permissions', {})
+    for k in ('allow', 'ask', 'deny'):
+        merged = sorted(list(set(lp.get(k, []) + rp.get(k, []))))
+        rp[k] = merged
+    with open(repo, 'w') as f: json.dump(r, f, indent=2)
+except Exception: pass
+" 2>/dev/null || true
 fi
 
 # ------------------------------------------------------------------------------

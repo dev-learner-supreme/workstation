@@ -16,3 +16,4 @@
 2. **Upstream Source Grounding:** Cross-reference all setup routines, desktop binds, and shell configurations directly against Omarchy upstream source repositories (`omarchy`, `omarchy-zsh`, `omarchy-settings`) on GitHub.
 3. **Cold-Boot Simulation:** When evaluating or modifying setup scripts, simulate the exact human journey on a brand-new, clean installation from first boot to daily development. Every dependency must be pre-declared, every command deterministic, and every link seamless.
 4. **Zero Legacy Drift:** Reject and immediately purge all stale platform baggage (e.g. legacy WSL2/Windows remnants). The system is 100% bare-metal Linux.
+5. **Antigravity CLI Whitelist Tracking:** All approved commands are versioned in `agent/integrations/antigravity-settings.json` and synchronized bidirectionally with `~/.gemini/antigravity-cli/settings.json` via `./sync.sh` and the `antigravity-whitelist` skill (`manage-whitelist.sh`).
