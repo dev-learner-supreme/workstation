@@ -5,6 +5,7 @@
 #   --offline     skip checks that use the network (updates, DNS, GitHub)
 #   --no-thermal  skip the thermal-watch quick report at the end
 set -u
+export SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket}"
 offline=0 thermal=1
 for a in "$@"; do
   case $a in
