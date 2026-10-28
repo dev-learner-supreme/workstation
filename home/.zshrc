@@ -125,15 +125,9 @@ done
 unset _zsh_sh
 
 # ==============================================================================
-# SSH Key Management (systemd user socket on Omarchy / keychain fallback on WSL)
+# SSH Key Management (Omarchy native systemd user socket)
 # ==============================================================================
-_ssh_sock="${XDG_RUNTIME_DIR:-/run/user/${UID:-$(id -u)}}/ssh-agent.socket"
-if [[ -S "$_ssh_sock" ]]; then
-  export SSH_AUTH_SOCK="$_ssh_sock"
-elif [[ -z "$SSH_AUTH_SOCK" ]] && command -v keychain &>/dev/null; then
-  eval $(keychain --eval --agents ssh --nogui -q id_ed25519 2>/dev/null)
-fi
-unset _ssh_sock
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"
 
 
 export PATH="$HOME/.local/bin:$PATH"

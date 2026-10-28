@@ -28,9 +28,10 @@ Because `workstation` and your work repositories are private, establish SSH auth
    chmod 600 ~/.ssh/id_ed25519
    chmod 644 ~/.ssh/id_ed25519.pub
    ```
-3. Enable the native systemd agent socket and add key:
+3. Enable native systemd SSH agent socket and add key:
    ```bash
    systemctl --user enable --now ssh-agent.socket
+   export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"
    ssh-add ~/.ssh/id_ed25519
    ```
 4. Verify GitHub connection:
@@ -43,6 +44,7 @@ Because `workstation` and your work repositories are private, establish SSH auth
 ```bash
 ssh-keygen -t ed25519 -C "arunraobalappa@gmail.com" -f ~/.ssh/id_ed25519
 systemctl --user enable --now ssh-agent.socket
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"
 ssh-add ~/.ssh/id_ed25519
 wl-copy < ~/.ssh/id_ed25519.pub  # Or cat ~/.ssh/id_ed25519.pub
 ```

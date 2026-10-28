@@ -1,6 +1,6 @@
 # Workstation System Capabilities & Toolchain Inventory
 
-This manifest catalogs all discovered developer runtimes, search utilities, and CLI tools on the workstation. Originally calibrated under WSL2 Ubuntu and adapted for Omarchy 4 (Arch Linux + Hyprland). The agent uses this inventory to select the most efficient binary for any given operation.
+This manifest catalogs all discovered developer runtimes, search utilities, and CLI tools on the workstation running Omarchy 4 (Arch Linux + Hyprland). The agent uses this inventory to select the most efficient binary for any given operation.
 
 ---
 
@@ -42,10 +42,9 @@ This manifest catalogs all discovered developer runtimes, search utilities, and 
 
 ---
 
-## 4. Workstation Package Ecosystem (Omarchy / Arch & WSL Heritage)
+## 4. Workstation Package Ecosystem (Omarchy 4 / Arch Linux)
 
-### Primary Target: Omarchy 4 (Arch Linux / Pacman / Yay)
-Refer to [`state/pacman-explicit.txt`](../state/pacman-explicit.txt) (165 explicit packages), [`state/flatpak.txt`](../state/flatpak.txt), and [`state/omarchy-plugins.txt`](../state/omarchy-plugins.txt).
+Refer to [`state/pacman-explicit.txt`](../state/pacman-explicit.txt), [`state/flatpak.txt`](../state/flatpak.txt), and [`state/omarchy-plugins.txt`](../state/omarchy-plugins.txt).
 Key system packages:
 - `linux-omarchy` (Kernel)
 - `hyprland` & `uwsm` (Wayland compositor & session)
@@ -55,7 +54,4 @@ Key system packages:
 - `thermald` & `cpu-power-cap` (RAPL thermal limiter)
 - `zram-generator` (In-memory zstd compression)
 - `tailscale` (Encrypted mesh VPN)
-
-### Historical Lineage: WSL2 Incubation Tooling
-During initial bootstrapping under WSL2 Ubuntu, packages included:
-`build-essential`, `eza`, `fd-find`, `fzf`, `gh`, `git`, `glow`, `jq`, `micro`, `ripgrep`, `zoxide`, `zsh-autosuggestions`.
+- Developer toolchains: `zsh`, `omarchy-zsh`, `micro`, `tree`, `eza`, `fzf`, `zoxide`, `ripgrep`, `fd`, `jq`, `starship`

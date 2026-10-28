@@ -35,6 +35,7 @@ home_files=(
   .local/state/omarchy/powerprofiles/ac
   .local/bin/airplane-mode-toggle
   .local/share/applications/android-studio.desktop
+  .config/git/ignore
 )
 
 home_dirs=(

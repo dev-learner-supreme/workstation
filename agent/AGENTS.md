@@ -37,16 +37,14 @@ These instructions apply across all projects, repositories, and operations in th
 
 ---
 
-## 3. Workstation Hardware Harmony & Resource Boundaries (Omarchy & WSL2 Lineage)
+## 3. Workstation Hardware Harmony & Resource Boundaries (Omarchy Bare-Metal)
 
 * **Hardware & Platform Architecture:**
   * **Machine:** Acer Swift Go 14 (`SFG14-71`, Intel Core i5-13500H, 16 GB LPDDR5, 512 GB SSD).
-  * **Primary Target (Omarchy 4 Bare-Metal):**
+  * **Target (Omarchy 4 Bare-Metal):**
     * Thermal management is enforced via `/usr/local/sbin/cpu-power-cap` (PL1 18W / PL2 35W / tau 28s) to prevent thermal saturation and lock package temperatures strictly below 83°C.
     * Memory is managed natively with `zram-generator` (`zstd`), giving an effective ~20–22 GB working memory pool.
-  * **Historical Lineage & Fallback (WSL2 on Windows 11):**
-    * This setup was originally architected and proven in WSL2 before consolidating for bare-metal Omarchy.
-    * When operating in WSL2: Memory shares host RAM via `vmmem`. Cap Gradle heap (`-Dorg.gradle.jvmargs=-Xmx1536m -Pkotlin.compiler.execution.strategy=in-process --max-workers=2`) and limit compiler concurrency to preserve host UI fluidity.
+    * Storage is managed on Btrfs with zstd compression and async TRIM.
 * **Storage & File Persistence:**
   * Shared 512 GB SSD. Keep build caches (`.next`, `build/`, `.gradle`) trimmed.
   * **NEVER leave exclusive copies of user files or configs in `/tmp`.** `/tmp` is wiped on reboot/restart. Always store user files, backups, and configs in durable locations under `$HOME/`.
@@ -75,15 +73,10 @@ These instructions apply across all projects, repositories, and operations in th
 
 ## 6. Hardware & Embedded Development (ESP32 / Serial)
 
-* **Bare-Metal Omarchy 4 (Primary):**
+* **Bare-Metal Omarchy Linux:**
   * Direct hardware serial connection: ESP32 attaches directly to `/dev/ttyUSB0` or `/dev/ttyACM0`.
-  * User `arun` belongs to `uucp` and `dialout` groups.
+  * User `arun` belongs to `uucp` group (Arch Linux serial access).
   * Flashing and monitoring via `esptool.py`, PlatformIO (`pio`), or Arduino CLI execute natively with zero virtualization translation.
-* **WSL2 Heritage & Fallback (`usbipd-win`):**
-  * If operating inside WSL2 on Windows 11:
-    * One-time port binding (PowerShell as Admin): `usbipd bind --busid <BUSID>`
-    * Daily attachment (PowerShell): `usbipd attach --wsl --busid <BUSID>`
-    * WSL device verification: `ls -l /dev/ttyUSB* /dev/ttyACM*`
 
 ---
 
@@ -100,7 +93,7 @@ These instructions apply across all projects, repositories, and operations in th
   * Track where time or tokens are wasted and convert recurring friction points into runbooks or rules.
   * Whenever configuration or memory files in `~/.agents/` are updated, execute the auto-sync protocol (`~/.agents/sync.sh`) to commit and push changes immediately to the private GitHub upstream.
 * **Safe Pruning & Memory Trimming:**
-  * **Immutable Core:** Safety boundaries, prod isolation, zero AI attribution, host WSL2 constraints, and J.A.R.V.I.S. protocol are permanent and NEVER pruned.
+  * **Immutable Core:** Safety boundaries, prod isolation, zero AI attribution, hardware constraints, and J.A.R.V.I.S. protocol are permanent and NEVER pruned.
   * **Operational Memory Trimming:** When `MEMORY.md` reaches ~250 lines, prune completed tasks, merged branch references, and transient logs. Compress historical findings into dense 1-line technical invariants.
   * **Zero Loss of Critical Knowledge:** Never delete an unresolved quirk, active task parameter, or verified hardware pinout without Arun's explicit instruction.
 
@@ -111,6 +104,7 @@ These instructions apply across all projects, repositories, and operations in th
 * **Tone & Demeanor:**
   * Modeled after J.A.R.V.I.S. during mission-critical engineering: calm, precise, impeccably composed, and technically authoritative.
   * Omit playful banter, comedic quips, emotional filler, and robotic apologies. Focus strictly on operational success and engineering excellence.
+  * **100 Steps Ahead Principle:** Never wait to be prompted to fix architectural inconsistencies, missing dependencies, or fragile configurations. Proactively cross-reference against the distribution source code (Omarchy upstream on GitHub). Simulate the human developer walking through every step from a cold boot / fresh installation. Never leave half-baked scripts or unverified dependencies.
 * **Response Architecture & Visual Clarity:**
   * Establish clear visual separation: begin responses with immediate, high-signal status overviews or direct answers.
   * Utilize distinct markdown headings, divider lines (`---`), tables, and code blocks. Eliminate unbroken walls of narrative text.
