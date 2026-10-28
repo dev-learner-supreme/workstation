@@ -223,6 +223,16 @@ if [[ -d "$REPO_DIR/home" ]]; then
     git config --global core.excludesfile "$HOME/.config/git/ignore" 2>/dev/null || true
   fi
 
+  # Ensure custom Hyprland keybindings take priority over preinstalled webapp binds
+  if [[ -f "$HOME/.config/hypr/hyprland.lua" ]]; then
+    sed -i 's/^-- omarchy_preinstalled_bindings = false/omarchy_preinstalled_bindings = false/' "$HOME/.config/hypr/hyprland.lua" 2>/dev/null || true
+  fi
+
+  # Start EasyEffects background audio processing service if session is active
+  if systemctl --user is-system-running &>/dev/null || [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+    systemctl --user start 'app-easyeffects\x2dservice@autostart.service' 2>/dev/null || true
+  fi
+
   echo "${GREEN}[✓] Dotfiles successfully restored from home/.${RESET}"
 else
   echo "${YELLOW}[!] Warning: home/ directory not found in repository.${RESET}"

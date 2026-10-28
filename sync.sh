@@ -10,8 +10,12 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
 # Ensure authorship attribution
-git config user.name "Arun Rao Balappa"
-git config user.email "arunraobalappa@gmail.com"
+if [[ "$(git config user.name 2>/dev/null)" != "Arun Rao Balappa" ]]; then
+  git config user.name "Arun Rao Balappa" 2>/dev/null || true
+fi
+if [[ "$(git config user.email 2>/dev/null)" != "arunraobalappa@gmail.com" ]]; then
+  git config user.email "arunraobalappa@gmail.com" 2>/dev/null || true
+fi
 
 # ------------------------------------------------------------------------------
 # 1. Snapshot User Dotfiles ($HOME -> home/)
@@ -150,8 +154,8 @@ else
   echo "[✓] Local workstation snapshot committed ($TIMESTAMP)."
 fi
 
-# Push if requested or upstream configured
-if [[ "${1:-}" == "--push" ]] || git remote get-url origin &>/dev/null; then
+# Push only if explicitly requested
+if [[ "${1:-}" == "--push" ]]; then
   if git push -u origin main 2>/dev/null; then
     echo "[✓] Successfully pushed to $(git remote get-url origin)."
   else
