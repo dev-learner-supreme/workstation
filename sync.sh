@@ -64,6 +64,8 @@ done
 
 # ------------------------------------------------------------------------------
 # 2. Snapshot Root System Configs (/ -> system/)
+# Protected: Repository versions are authoritative; live files never silently overwrite
+# reviewed repository scripts unless explicitly requested via --sync-system.
 # ------------------------------------------------------------------------------
 system_files=(
   /etc/default/cpu-power-cap
@@ -75,10 +77,26 @@ system_files=(
   /etc/systemd/system/cpu-power-stats.timer
 )
 
+SYNC_SYSTEM=false
+for arg in "$@"; do
+  [[ "$arg" == "--sync-system" ]] && SYNC_SYSTEM=true
+done
+
 for f in "${system_files[@]}"; do
+  repo_target="system$f"
   if [[ -r "$f" ]]; then
-    mkdir -p "system$(dirname "$f")"
-    cp -p "$f" "system$f"
+    if [[ ! -f "$repo_target" ]]; then
+      mkdir -p "$(dirname "$repo_target")"
+      cp -p "$f" "$repo_target"
+    elif ! cmp -s "$f" "$repo_target"; then
+      if [[ "$SYNC_SYSTEM" == "true" ]]; then
+        echo "[!] Overwriting tracked $repo_target with live $f (--sync-system specified)..."
+        cp -p "$f" "$repo_target"
+      else
+        echo "[*] Notice: Live $f differs from hardened $repo_target."
+        echo "    Preserving reviewed repository version (pass --sync-system to overwrite)."
+      fi
+    fi
   fi
 done
 
@@ -139,11 +157,11 @@ git add home system state agent README.md setup.sh sync.sh .gitignore
 # Comprehensive secret pattern detection
 SECRET_PATTERN='-----BEGIN [A-Z ]*PRIVATE KEY-----|"(accessToken|refreshToken|client_secret|apiKey|api_key|password)"|gh[pousr]_[A-Za-z0-9]{30,}|sk-ant-[A-Za-z0-9_-]{20,}|AIzaSy[A-Za-z0-9_-]{33}|xox[baprs]-[A-Za-z0-9]{10,}|glpat-[A-Za-z0-9_-]{20,}'
 
-# Fail-closed secret scanner with explicit pattern flag (-e)
+# Fail-closed secret scanner using here-string (avoids pipefail SIGPIPE/141 issues)
 STAGED_DIFF="$(git diff --cached)"
 if [[ -n "$STAGED_DIFF" ]]; then
   scanner_status=0
-  echo "$STAGED_DIFF" | grep -q -E -e "$SECRET_PATTERN" || scanner_status=$?
+  grep -q -E -e "$SECRET_PATTERN" <<< "$STAGED_DIFF" || scanner_status=$?
   if [[ "$scanner_status" -eq 0 ]]; then
     echo "[!] Security Warning: Possible secret, private key, or credential detected in staged changes." >&2
     echo "    Aborting commit. Staged diff matched secret scanner patterns." >&2

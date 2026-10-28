@@ -75,8 +75,11 @@ FOREIGN_STATE="$REPO_DIR/state/pacman-foreign.txt"
 FLATPAK_STATE="$REPO_DIR/state/flatpak.txt"
 
 # Official Arch / Omarchy packages
+fallback_foreign=()
+
 if [[ -f "$PACMAN_STATE" && -s "$PACMAN_STATE" ]]; then
-  pkg_count="$(wc -l < "$PACMAN_STATE")"
+  mapfile -t all_native_pkgs < <(grep -vE '^\s*(#|$)' "$PACMAN_STATE")
+  pkg_count="${#all_native_pkgs[@]}"
   echo "Recorded explicit pacman packages: ${BOLD}$pkg_count${RESET}"
 
   DO_PACMAN="Y"
@@ -89,10 +92,29 @@ if [[ -f "$PACMAN_STATE" && -s "$PACMAN_STATE" ]]; then
     if [[ "$DRY_RUN" == "true" ]]; then
       echo "    [DRY-RUN] Would run: sudo pacman -Syu --needed --noconfirm - < $PACMAN_STATE"
     else
-      echo "[+] Synchronizing databases, upgrading system, and installing packages..."
-      # Use -Syu to strictly prevent partial upgrades on Arch Linux
-      sudo pacman -Syu --needed --noconfirm - < "$PACMAN_STATE"
-      echo "${GREEN}[✓] Pacman packages synchronized and installed successfully.${RESET}"
+      echo "[+] Synchronizing package databases and checking availability..."
+      sudo pacman -Sy --noconfirm >/dev/null 2>&1 || true
+
+      available_native=()
+      for pkg in "${all_native_pkgs[@]}"; do
+        if pacman -Si "$pkg" &>/dev/null; then
+          available_native+=("$pkg")
+        else
+          fallback_foreign+=("$pkg")
+        fi
+      done
+
+      if (( ${#fallback_foreign[@]} > 0 )); then
+        echo "${YELLOW}[!] Notice: The following ${#fallback_foreign[@]} packages were not found in active sync repos:${RESET}"
+        echo "    ${fallback_foreign[*]}"
+        echo "[*] Deferring unresolved packages to the AUR / yay installer step."
+      fi
+
+      if (( ${#available_native[@]} > 0 )); then
+        echo "[+] Upgrading system and installing ${#available_native[@]} verified packages..."
+        sudo pacman -Su --needed --noconfirm "${available_native[@]}"
+        echo "${GREEN}[✓] Pacman packages synchronized and installed successfully.${RESET}"
+      fi
     fi
   else
     echo "${YELLOW}[!] Skipping pacman package installation.${RESET}"
@@ -100,20 +122,27 @@ if [[ -f "$PACMAN_STATE" && -s "$PACMAN_STATE" ]]; then
 fi
 
 # Foreign / AUR packages
+foreign_pkgs=()
 if [[ -f "$FOREIGN_STATE" && -s "$FOREIGN_STATE" ]]; then
-  aur_count="$(wc -l < "$FOREIGN_STATE")"
-  echo "Recorded foreign/AUR packages: ${BOLD}$aur_count${RESET}"
+  mapfile -t foreign_pkgs < <(grep -vE '^\s*(#|$)' "$FOREIGN_STATE")
+fi
+
+all_foreign_pkgs=("${foreign_pkgs[@]}" "${fallback_foreign[@]}")
+
+if (( ${#all_foreign_pkgs[@]} > 0 )); then
+  aur_count="${#all_foreign_pkgs[@]}"
+  echo "Recorded foreign/AUR packages to install: ${BOLD}$aur_count${RESET}"
   if command -v yay &>/dev/null; then
     if [[ "$DRY_RUN" == "true" ]]; then
-      echo "    [DRY-RUN] Would run: yay -Syu --needed --noconfirm - < $FOREIGN_STATE"
+      echo "    [DRY-RUN] Would run: yay -Syu --needed --noconfirm ${all_foreign_pkgs[*]}"
     else
-      echo "[+] Upgrading and installing AUR packages via yay..."
-      yay -Syu --needed --noconfirm - < "$FOREIGN_STATE"
+      echo "[+] Upgrading and installing AUR/foreign packages via yay..."
+      yay -Syu --needed --noconfirm "${all_foreign_pkgs[@]}"
       echo "${GREEN}[✓] AUR packages installed successfully.${RESET}"
     fi
   else
     echo "${YELLOW}[!] 'yay' not found; install AUR packages manually if needed:${RESET}"
-    echo "    yay -Syu --needed - < \"$FOREIGN_STATE\""
+    echo "    yay -Syu --needed ${all_foreign_pkgs[*]}"
   fi
 fi
 
@@ -529,9 +558,13 @@ if command -v omarchy &>/dev/null; then
         local expected_commit="$3"
         local plugin_dir="$HOME/.config/omarchy/plugins/$name"
 
-        if ! omarchy plugin list 2>/dev/null | grep -q "$name"; then
-          echo "    -> Installing $name from $repo_url..."
-          if ! omarchy plugin add "$repo_url" --enable --yes; then
+        # 1. If already installed, disable before altering code revisions
+        if omarchy plugin list 2>/dev/null | grep -q "$name"; then
+          omarchy plugin disable "$name" 2>/dev/null || true
+        else
+          # 2. Add plugin WITHOUT --enable so unverified code is never executed
+          echo "    -> Cloning $name from $repo_url (disabled by default)..."
+          if ! omarchy plugin add "$repo_url" --yes; then
             echo "    ${RED}[!] Error: Failed to add plugin $name via omarchy plugin add.${RESET}" >&2
             return 1
           fi
@@ -542,12 +575,14 @@ if command -v omarchy &>/dev/null; then
           return 1
         fi
 
-        echo "    -> Pinning $name to commit $expected_commit..."
+        # 3. Check out the verified commit hash
+        echo "    -> Checking out verified commit $expected_commit for $name..."
         if ! git -C "$plugin_dir" checkout -q "$expected_commit"; then
           echo "    ${RED}[!] Error: Failed to checkout commit $expected_commit in $plugin_dir.${RESET}" >&2
           return 1
         fi
 
+        # 4. Strictly assert that HEAD matches expected commit
         local actual_commit
         actual_commit="$(git -C "$plugin_dir" rev-parse HEAD 2>/dev/null || echo '')"
         if [[ "$actual_commit" != "$expected_commit" ]]; then
@@ -555,7 +590,14 @@ if command -v omarchy &>/dev/null; then
           return 1
         fi
 
-        echo "    ${GREEN}[✓] $name verified at pinned commit (${expected_commit:0:7}).${RESET}"
+        # 5. Enable the plugin ONLY AFTER verification succeeds
+        echo "    -> Integrity verified. Enabling $name..."
+        if ! omarchy plugin enable "$name"; then
+          echo "    ${RED}[!] Error: Failed to enable plugin $name after verification.${RESET}" >&2
+          return 1
+        fi
+
+        echo "    ${GREEN}[✓] $name verified at commit (${expected_commit:0:7}) and enabled.${RESET}"
         return 0
       }
 
