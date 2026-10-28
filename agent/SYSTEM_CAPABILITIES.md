@@ -1,6 +1,6 @@
-# WSL System Capabilities & Toolchain Inventory
+# Workstation System Capabilities & Toolchain Inventory
 
-This manifest catalogs all discovered developer runtimes, search utilities, and CLI tools on WSL2 Ubuntu. The agent uses this inventory to select the most efficient binary for any given operation.
+This manifest catalogs all discovered developer runtimes, search utilities, and CLI tools on the workstation. Originally calibrated under WSL2 Ubuntu and adapted for Omarchy 4 (Arch Linux + Hyprland). The agent uses this inventory to select the most efficient binary for any given operation.
 
 ---
 
@@ -23,15 +23,15 @@ This manifest catalogs all discovered developer runtimes, search utilities, and 
 
 | Binary | Location | Agent Operation Benefit |
 | :--- | :--- | :--- |
-| **`rg` (ripgrep)** | /usr/bin/rg | Sub-second regex codebase search; replaces slow grep |
-| **`fd` (fd-find)** | /home/arun/.local/bin/fd | Fast file traversal; replaces slow find commands |
-| **`jq`** | /usr/bin/jq | Deterministic JSON filtering & schema validation |
-| **`tree`** | /usr/bin/tree | High-level directory topology snapshots |
-| **`eza`** | /usr/bin/eza | Modern ls with file metadata and tree view |
-| **`fzf`** | /usr/bin/fzf | Command-line fuzzy matching |
-| **`glow`** | /usr/bin/glow | Terminal Markdown formatting and inspection |
-| **`micro`** | /usr/bin/micro | Terminal editor |
-| **`zoxide`** | /usr/bin/zoxide | Fast directory jumping |
+| **`rg` (ripgrep)** | `/usr/bin/rg` | Sub-second regex codebase search; replaces slow grep |
+| **`fd` (fd-find)** | `~/.local/bin/fd` or `/usr/bin/fd` | Fast file traversal; replaces slow find commands |
+| **`jq`** | `/usr/bin/jq` | Deterministic JSON filtering & schema validation |
+| **`tree`** | `/usr/bin/tree` | High-level directory topology snapshots |
+| **`eza`** | `/usr/bin/eza` | Modern ls with file metadata and tree view |
+| **`fzf`** | `/usr/bin/fzf` | Command-line fuzzy matching |
+| **`glow`** | `/usr/bin/glow` | Terminal Markdown formatting and inspection |
+| **`micro`** | `/usr/bin/micro` | Terminal editor |
+| **`zoxide`** | `/usr/bin/zoxide` | Fast directory jumping |
 
 ---
 
@@ -42,49 +42,20 @@ This manifest catalogs all discovered developer runtimes, search utilities, and 
 
 ---
 
-## 4. Notable Manually Installed Packages (APT)
+## 4. Workstation Package Ecosystem (Omarchy / Arch & WSL Heritage)
 
-- `bash`
-- `build-essential`
-- `coreutils`
-- `coreutils-from-uutils`
-- `curl`
-- `dash`
-- `diffutils`
-- `dpkg`
-- `eza`
-- `fd-find`
-- `findutils`
-- `fzf`
-- `gh`
-- `git`
-- `glow`
-- `gnu-coreutils`
-- `grep`
-- `gzip`
-- `hostname`
-- `hwdata`
-- `init`
-- `jq`
-- `keychain`
-- `libattr1`
-- `linux-tools-virtual`
-- `micro`
-- `ncurses-base`
-- `ncurses-bin`
-- `openjdk-25-jdk`
-- `pipx`
-- `python3-pip`
-- `python3-venv`
-- `ripgrep`
-- `rust-coreutils`
-- `tar`
-- `tree`
-- `ubuntu-minimal`
-- `ubuntu-wsl`
-- `unzip`
-- `util-linux`
-- `zoxide`
-- `zsh`
-- `zsh-autosuggestions`
-- `zsh-syntax-highlighting`
+### Primary Target: Omarchy 4 (Arch Linux / Pacman / Yay)
+Refer to [`state/pacman-explicit.txt`](../state/pacman-explicit.txt) (165 explicit packages), [`state/flatpak.txt`](../state/flatpak.txt), and [`state/omarchy-plugins.txt`](../state/omarchy-plugins.txt).
+Key system packages:
+- `linux-omarchy` (Kernel)
+- `hyprland` & `uwsm` (Wayland compositor & session)
+- `foot` (Terminal)
+- `pipewire` & `wireplumber` (Audio routing & sinks)
+- `easyeffects` (Realtek ALC256 auto-gain)
+- `thermald` & `cpu-power-cap` (RAPL thermal limiter)
+- `zram-generator` (In-memory zstd compression)
+- `tailscale` (Encrypted mesh VPN)
+
+### Historical Lineage: WSL2 Incubation Tooling
+During initial bootstrapping under WSL2 Ubuntu, packages included:
+`build-essential`, `eza`, `fd-find`, `fzf`, `gh`, `git`, `glow`, `jq`, `micro`, `ripgrep`, `zoxide`, `zsh-autosuggestions`.

@@ -37,21 +37,19 @@ These instructions apply across all projects, repositories, and operations in th
 
 ---
 
-## 3. WSL2 Resource Footprint & Host Harmony
+## 3. Workstation Hardware Harmony & Resource Boundaries (Omarchy & WSL2 Lineage)
 
-* **Environment Scope & Host Boundary:**
-  * Host: Windows 11 on Acer Swift Go 14 (16 GB DDR5, i5-13500H, 512 GB SSD).
-  * Boundary: Host hardware thermals and fan curves are managed exclusively by Windows. The agent's responsibility is strictly managing the **WSL2 resource footprint** so that neither WSL nor the Windows host experience degraded performance or UI stutter.
-* **Memory & Process Management:**
-  * WSL2 shares host RAM via `vmmem`. Memory starvation triggers Linux OOM killer freezes and slows host Windows.
-  * **Android / Gradle Builds:** Always cap Gradle heap and workers:
-    `-Dorg.gradle.jvmargs=-Xmx1536m -Pkotlin.compiler.execution.strategy=in-process --max-workers=2`
-  * **Node.js / Next.js:** Avoid spawning unbounded child processes or running parallel memory-heavy test suites simultaneously.
-* **CPU Concurrency:**
-  * Limit heavy background compiler concurrency to prevent vCPU spikes from lagging Windows host interactions.
+* **Hardware & Platform Architecture:**
+  * **Machine:** Acer Swift Go 14 (`SFG14-71`, Intel Core i5-13500H, 16 GB LPDDR5, 512 GB SSD).
+  * **Primary Target (Omarchy 4 Bare-Metal):**
+    * Thermal management is enforced via `/usr/local/sbin/cpu-power-cap` (PL1 18W / PL2 35W / tau 28s) to prevent thermal saturation and lock package temperatures strictly below 83°C.
+    * Memory is managed natively with `zram-generator` (`zstd`), giving an effective ~20–22 GB working memory pool.
+  * **Historical Lineage & Fallback (WSL2 on Windows 11):**
+    * This setup was originally architected and proven in WSL2 before consolidating for bare-metal Omarchy.
+    * When operating in WSL2: Memory shares host RAM via `vmmem`. Cap Gradle heap (`-Dorg.gradle.jvmargs=-Xmx1536m -Pkotlin.compiler.execution.strategy=in-process --max-workers=2`) and limit compiler concurrency to preserve host UI fluidity.
 * **Storage & File Persistence:**
   * Shared 512 GB SSD. Keep build caches (`.next`, `build/`, `.gradle`) trimmed.
-  * **NEVER leave exclusive copies of user files or configs in `/tmp`.** `/tmp` is wiped on WSL restart or reboot. Always store user files, backups, and configs in durable locations under `$HOME/`.
+  * **NEVER leave exclusive copies of user files or configs in `/tmp`.** `/tmp` is wiped on reboot/restart. Always store user files, backups, and configs in durable locations under `$HOME/`.
 
 ---
 
@@ -75,33 +73,17 @@ These instructions apply across all projects, repositories, and operations in th
 
 ---
 
-## 6. Hardware & Embedded Development (ESP32 / usbipd)
+## 6. Hardware & Embedded Development (ESP32 / Serial)
 
-* **Prerequisites & State:**
-  * Windows 11 host has `usbipd-win` installed.
-  * WSL2 Ubuntu has `linux-tools-virtual` / `hwdata` (`/usr/bin/usbip`) installed.
-  * User `arun` is already configured in the `dialout` group.
-* **One-Time Port Binding (Windows PowerShell as Admin):**
-  * Find the BUSID for the ESP32 (UART-to-USB bridge: CP210x, HL-340, CH340, FTDI, etc.):
-    ```powershell
-    usbipd list
-    ```
-  * Bind the port to Windows sharing service:
-    ```powershell
-    usbipd bind --busid <BUSID>
-    ```
-* **Daily / Session Attachment (Standard Windows PowerShell):**
-  * Attach ESP32 to active WSL session after plugging in or restarting:
-    ```powershell
-    usbipd attach --wsl --busid <BUSID>
-    ```
-    *(Specify `--wsl Ubuntu` if multiple distros exist).*
-* **WSL Device Verification & Tooling (WSL Terminal):**
-  * Check detected serial port:
-    ```bash
-    ls -l /dev/ttyUSB* /dev/ttyACM*
-    ```
-  * Verify permissions (owned by `root:dialout`). Flashing commands via `esptool.py`, PlatformIO, or Arduino CLI target `/dev/ttyUSB0` or `/dev/ttyACM0`.
+* **Bare-Metal Omarchy 4 (Primary):**
+  * Direct hardware serial connection: ESP32 attaches directly to `/dev/ttyUSB0` or `/dev/ttyACM0`.
+  * User `arun` belongs to `uucp` and `dialout` groups.
+  * Flashing and monitoring via `esptool.py`, PlatformIO (`pio`), or Arduino CLI execute natively with zero virtualization translation.
+* **WSL2 Heritage & Fallback (`usbipd-win`):**
+  * If operating inside WSL2 on Windows 11:
+    * One-time port binding (PowerShell as Admin): `usbipd bind --busid <BUSID>`
+    * Daily attachment (PowerShell): `usbipd attach --wsl --busid <BUSID>`
+    * WSL device verification: `ls -l /dev/ttyUSB* /dev/ttyACM*`
 
 ---
 
