@@ -149,6 +149,7 @@ if [[ -d "$REPO_DIR/home" ]]; then
     echo "[+] Enabling systemd user ssh-agent.socket..."
     systemctl --user daemon-reload 2>/dev/null || true
     systemctl --user enable --now ssh-agent.socket 2>/dev/null || true
+    systemctl --user set-environment SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket" 2>/dev/null || true
   fi
 
   # Make executables in .local/bin executable

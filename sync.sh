@@ -25,6 +25,7 @@ home_files=(
   .config/hypr/input.lua
   .config/hypr/looknfeel.lua
   .config/environment.d/ssh_auth_socket.conf
+  .config/environment.d/ssh-agent.conf
   .config/autostart/easyeffects-service.desktop
   .config/easyeffects/db/easyeffectsrc
   .config/wireplumber/wireplumber.conf.d/60-output-priority.conf
