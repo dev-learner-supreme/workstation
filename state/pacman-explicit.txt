@@ -1,3 +1,4 @@
+aether
 alsa-utils
 asdcontrol
 base
@@ -16,6 +17,7 @@ btrfs-progs
 calf
 chromium
 clang
+cliamp
 cups
 cups-filters
 cups-pk-helper
@@ -70,10 +72,12 @@ intel-media-driver
 intel-ucode
 inxi
 jq
+kdenlive
 kernel-modules-hook
 kicad
 kicad-library
 kicad-library-3d
+lazydocker
 lazygit
 less
 libpulse
@@ -93,6 +97,7 @@ man-db
 mariadb-libs
 mise-bin
 mkinitcpio
+moonlight-qt
 mpv
 mpv-mpris
 nautilus
@@ -102,14 +107,20 @@ noto-fonts
 noto-fonts-cjk
 noto-fonts-emoji
 nss-mdns
+obs-studio
+obsidian
+omacalc
+omacut
 omarchy
 omarchy-keyring
 omarchy-nvim
 omarchy-settings
 omarchy-zsh
+omawrite
 omazed
 pacman-contrib
 pamixer
+pinta
 pipewire
 pipewire-alsa
 pipewire-jack
@@ -163,6 +174,7 @@ wtype
 xdg-desktop-portal-gtk
 xdg-desktop-portal-hyprland
 xdg-terminal-exec
+xournalpp
 yaru-icon-theme
 yay
 yt-dlp

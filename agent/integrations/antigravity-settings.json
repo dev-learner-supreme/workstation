@@ -17,6 +17,7 @@
       "command(find /home/arun/workstation/home -type f)",
       "command(flatpak)",
       "command(free)",
+      "command(git -C ~/.config/omarchy/plugins/tornikegomareli.spaces rev-parse HEAD)",
       "command(git)",
       "command(grep)",
       "command(iw)",
