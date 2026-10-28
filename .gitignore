@@ -22,3 +22,8 @@ __pycache__/
 # Virtual environments
 .venv/
 venv/
+
+# Whitelist repository orchestration scripts despite global gitignore
+!sync.sh
+!agent/sync.sh
+
