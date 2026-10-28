@@ -57,8 +57,8 @@ done
 
 for d in "${home_dirs[@]}"; do
   if [[ -d "$HOME/$d" ]]; then
-    mkdir -p "home/$(dirname "$d")"
-    cp -rp "$HOME/$d" "home/$d"
+    mkdir -p "home/$d"
+    cp -aT "$HOME/$d" "home/$d"
   fi
 done
 
