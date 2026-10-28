@@ -50,8 +50,8 @@ Acer Swift Go 14 SFG14-71 (i5-13500H, 15G RAM, eDP-1 at scale 2) runs Omarchy 4.
 - Undo: `omarchy plugin remove tornikegomareli.spaces && omarchy plugin enable omarchy.workspaces`, and remove its hooks.
 - Its Claude Code agent-badge hooks are in `~/.claude/settings.json`: UserPromptSubmit/PostToolUse → working, Stop → done, SessionEnd → end. All async. On 2026-10-21 the user had the Notification → waiting hook removed: its pulsing red "!" badge was distracting (it also fires after ~60 s idle). Don't re-add it.
 
-## Setup history repo
-- Private GitHub repo **dev-learner-supreme/omarchy-setup**, local copy at `~/omarchy-setup` (created 2026-10-21).
+## Workstation repository
+- Private GitHub repo **dev-learner-supreme/workstation**, local copy at `~/workstation`.
 - `./sync.sh` copies in Claude memory, skills, settings, the customized dotfiles (`home/`), the root power-cap files (`system/`) and package lists (`state/`). It runs a secret scan, then commits. `./sync.sh --push` also pushes.
 - Run it after setup changes. If you add a new config file, also add it to the `home_files`/`system_files` lists in `sync.sh`.
 - Pushing needs the SSH key in the agent. After a login, the user has to run `ssh-add` (or any ssh command) once in a terminal to unlock it.

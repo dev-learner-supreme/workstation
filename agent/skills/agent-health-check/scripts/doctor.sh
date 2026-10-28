@@ -203,11 +203,11 @@ else
   check_warn "Low available RAM: ${FREE_RAM}MB / ${TOTAL_RAM}MB (Starvation risk)"
 fi
 
-# Check root NVMe SSD capacity
-ROOT_AVAIL=$(df -h / 2>/dev/null | awk 'NR==2 {print $4}' || echo "unknown")
-ROOT_SIZE=$(df -h / 2>/dev/null | awk 'NR==2 {print $2}' || echo "unknown")
-ROOT_USE_PCT=$(df -h / 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%' || echo "0")
-if [ "$ROOT_USE_PCT" -lt 85 ]; then
+# Check root NVMe SSD capacity (using robust NF offset to handle anonymous mounts)
+ROOT_AVAIL=$(df -h / 2>/dev/null | awk 'NR==2 {print $(NF-2)}' || echo "unknown")
+ROOT_SIZE=$(df -h / 2>/dev/null | awk 'NR==2 {print $(NF-4)}' || echo "unknown")
+ROOT_USE_PCT=$(df -h / 2>/dev/null | awk 'NR==2 {print $(NF-1)}' | tr -d '%' || echo "0")
+if [ "${ROOT_USE_PCT:-0}" -lt 85 ]; then
   check_pass "NVMe Root SSD (/): ${ROOT_AVAIL} available / ${ROOT_SIZE} (${ROOT_USE_PCT}% used)"
 else
   check_warn "NVMe Root SSD (/) constrained: ${ROOT_AVAIL} available / ${ROOT_SIZE} (${ROOT_USE_PCT}% used)"

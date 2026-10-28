@@ -63,8 +63,8 @@ if [[ -f "$PACMAN_STATE" && -s "$PACMAN_STATE" ]]; then
   fi
 
   if [[ "$DO_PACMAN" =~ ^[Yy]([Ee][Ss])?$ ]]; then
-    echo "[+] Installing explicit pacman packages..."
-    sudo pacman -S --needed --noconfirm - < "$PACMAN_STATE"
+    echo "[+] Synchronizing databases and installing explicit pacman packages..."
+    sudo pacman -Sy --needed --noconfirm - < "$PACMAN_STATE"
     echo "${GREEN}[✓] Pacman packages installed successfully.${RESET}"
   else
     echo "${YELLOW}[!] Skipping pacman package installation.${RESET}"
@@ -75,7 +75,7 @@ fi
 if [[ -f "$FOREIGN_STATE" && -s "$FOREIGN_STATE" ]]; then
   if command -v yay &>/dev/null; then
     echo "[+] Installing AUR packages via yay..."
-    yay -S --needed --noconfirm - < "$FOREIGN_STATE"
+    yay -Sy --needed --noconfirm - < "$FOREIGN_STATE"
     echo "${GREEN}[✓] AUR packages installed successfully.${RESET}"
   else
     echo "${YELLOW}[!] 'yay' not found; please install AUR packages manually:${RESET}"
@@ -95,12 +95,12 @@ if [[ -f "$FLATPAK_STATE" && -s "$FLATPAK_STATE" ]] && command -v flatpak &>/dev
   fi
 
   if [[ "$DO_FLATPAK" =~ ^[Yy]([Ee][Ss])?$ ]]; then
-    echo "[+] Ensuring flathub remote is configured..."
-    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
+    echo "[+] Ensuring flathub user remote is configured..."
+    flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
     while IFS=$'\t' read -r app origin; do
       [[ -z "$app" ]] && continue
       echo "[+] Installing flatpak: $app..."
-      flatpak install -y --noninteractive "${origin:-flathub}" "$app" 2>/dev/null || true
+      flatpak --user install -y --noninteractive "${origin:-flathub}" "$app" 2>/dev/null || flatpak install -y --noninteractive "${origin:-flathub}" "$app" 2>/dev/null || true
     done < "$FLATPAK_STATE"
     echo "${GREEN}[✓] Flatpak applications installed.${RESET}"
   fi
@@ -294,8 +294,9 @@ echo "${BOLD}Important One-Time Manual Steps (Run as needed):${RESET}"
 echo "  1. ${BOLD}TRIM on LUKS2:${RESET}"
 echo "     sudo cryptsetup refresh --allow-discards --persistent root"
 echo ""
-echo "  2. ${BOLD}Omarchy Spaces Plugin:${RESET}"
+echo "  2. ${BOLD}Omarchy Spaces & Pomodoro Plugins:${RESET}"
 echo "     omarchy plugin add https://github.com/tornikegomareli/omarchy-spaces.git --enable"
+echo "     omarchy plugin add https://github.com/techywilbur/omarchy-pomodoro.git --enable"
 echo "     omarchy plugin disable omarchy.workspaces"
 echo ""
 echo "  3. ${BOLD}Power Profile (AC Balanced):${RESET}"

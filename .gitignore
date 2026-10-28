@@ -23,7 +23,8 @@ __pycache__/
 .venv/
 venv/
 
-# Whitelist repository orchestration scripts despite global gitignore
+# Whitelist repository orchestration scripts and agent memory despite global gitignore
 !sync.sh
 !agent/sync.sh
+!agent/MEMORY.md
 

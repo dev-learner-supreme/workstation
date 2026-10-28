@@ -218,8 +218,15 @@ for p in /sys/class/power_supply/BAT*; do
   awk -v h="$h" 'BEGIN { exit !(h >= 80) }' && OK "battery health ${h}%" || WARN "battery health ${h}% (below 80%)"
 done
 
-section "Setup history repo (~/omarchy-setup)"
-R=$HOME/omarchy-setup
+section "Workstation repository (~/workstation)"
+if [[ -d "$HOME/workstation/.git" ]]; then
+  R="$HOME/workstation"
+elif [[ -d "$HOME/omarchy-setup/.git" ]]; then
+  R="$HOME/omarchy-setup"
+else
+  R="$HOME/workstation"
+fi
+
 if [[ -d $R/.git ]]; then
   last=$(git -C "$R" log -1 --format='%cr (%s)')
   echo "  last snapshot: $last"
@@ -229,15 +236,15 @@ if [[ -d $R/.git ]]; then
     [[ -e $HOME/$f ]] && ! cmp -s "$HOME/$f" "$R/home/$f" && { echo "    changed since snapshot: ~/$f"; drift=1; }
   done < <(cd "$R/home" && find . -type f | sed 's|^\./||')
   ! diff -rq "$HOME/.claude/projects/-home-arun/memory" "$R/claude/memory" >/dev/null 2>&1 && { echo "    changed since snapshot: Claude memory"; drift=1; }
-  ((drift)) && WARN "files changed since the last snapshot (run ~/omarchy-setup/sync.sh)" || OK "snapshot up to date"
+  ((drift)) && WARN "files changed since the last snapshot (run $R/sync.sh)" || OK "snapshot up to date"
   if ! git -C "$R" rev-parse -q --verify '@{upstream}' >/dev/null 2>&1; then
-    WARN "repo never pushed (run: ~/omarchy-setup/sync.sh --push)"
+    WARN "repo never pushed (run: $R/sync.sh --push)"
   else
     ahead=$(git -C "$R" rev-list --count '@{upstream}..HEAD')
     ((ahead == 0)) && OK "all snapshots pushed" || WARN "$ahead snapshot commits not pushed (ssh-add; sync.sh --push)"
   fi
 else
-  FAIL "~/omarchy-setup repo missing"
+  FAIL "$R repository missing"
 fi
 
 if ((thermal)) && [[ -x $HOME/.claude/skills/thermal-watch/thermal-watch.sh ]]; then

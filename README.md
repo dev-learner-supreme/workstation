@@ -43,6 +43,7 @@ Because `workstation` and your work repositories are private, establish SSH auth
 
 #### Path B: Generating a Fresh Key (If No Backup)
 ```bash
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
 ssh-keygen -t ed25519 -C "arunraobalappa@gmail.com" -f ~/.ssh/id_ed25519
 systemctl --user enable --now ssh-agent.socket
 echo 'export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"' >> ~/.bashrc
@@ -87,9 +88,10 @@ Execute these one-time system settings:
    sudo cryptsetup refresh --allow-discards --persistent root
    ```
 
-2. **Install Spaces Bar Plugin:**
+2. **Install Spaces & Pomodoro Bar Plugins:**
    ```bash
    omarchy plugin add https://github.com/tornikegomareli/omarchy-spaces.git --enable
+   omarchy plugin add https://github.com/techywilbur/omarchy-pomodoro.git --enable
    omarchy plugin disable omarchy.workspaces
    ```
 

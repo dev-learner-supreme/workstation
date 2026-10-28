@@ -63,7 +63,7 @@ them done. For example, "Android SDK present" closes the first-run-wizard item.
 | Disk | btrfs device errors | `btrfs device stats /`: I/O or checksum corruption detected on NVMe |
 | Packages | `.pacnew` files | Diff them with the live file and merge. Never overwrite blindly |
 | Desktop | display mode changed | Primary eDP-1 not 2880x1800@90Hz scale 2; check `~/.config/hypr/monitors.lua` |
-| Desktop | natural scroll / rounding / keybindings missing | A `~/.config/hypr/*.lua` override was reset (`omarchy refresh hyprland`?). Restore it from `~/omarchy-setup/home/.config/hypr/` |
+| Desktop | natural scroll / rounding / keybindings missing | A `~/.config/hypr/*.lua` override was reset (`omarchy refresh hyprland`?). Restore it from `~/workstation/home/.config/hypr/` |
 | Desktop | Spaces disabled or workspaces enabled | An `omarchy plugin` change or a `refresh shell` |
 | Desktop | Spaces install has local edits / is a symlink | Left over from testing a fix. `git -C ~/.config/omarchy/plugins/tornikegomareli.spaces checkout -- .` (or remove the link and `omarchy plugin add` it again), then `omarchy restart shell`. Fork work lives in `~/Projects/omarchy-spaces` |
 | Desktop | preinstalled keybindings enabled | `~/.config/hypr/hyprland.lua` was reset (`omarchy refresh hyprland`?); restore `omarchy_preinstalled_bindings = false` |
@@ -72,7 +72,7 @@ them done. For example, "Android SDK present" closes the first-run-wizard item.
 | Shell/SSH | `.bashrc` changed | Re-running `omarchy-setup-zsh` drops the env-bootstrap line. Restore it from the repo copy |
 | Network | GitHub SSH fails | The key isn't in the agent yet this login: the user runs `ssh-add` |
 | Network | Tailscale version mismatch | Pacman updated tailscale; run `sudo systemctl restart tailscaled` |
-| Setup repo | changed since snapshot / not pushed | Offer `~/omarchy-setup/sync.sh` (and `--push`) |
+| Setup repo | changed since snapshot / not pushed | Offer `~/workstation/sync.sh` (and `--push`) |
 | Thermals | see the thermal-watch skill's table | |
 
 ## 4. Report back
@@ -81,6 +81,6 @@ them done. For example, "Android SDK present" closes the first-run-wizard item.
 - Then list each WARN/FAIL that is **not** in the baseline, with its cause and
   the exact fix command. Say which fixes need root.
 - Then list any open items that are now done (and update `open-items.md`).
-- Don't apply fixes without asking. For drift, offer to restore from `~/omarchy-setup`.
+- Don't apply fixes without asking. For drift, offer to restore from `~/workstation`.
 - If the thermal section shows something, follow the `thermal-watch` skill's rules,
   and append its dated line to `laptop-thermals.md`.
