@@ -92,9 +92,13 @@ if [[ -f "$PACMAN_STATE" && -s "$PACMAN_STATE" ]]; then
     if [[ "$DRY_RUN" == "true" ]]; then
       echo "    [DRY-RUN] Would run: sudo pacman -Syu --needed --noconfirm - < $PACMAN_STATE"
     else
-      echo "[+] Synchronizing package databases and checking availability..."
-      sudo pacman -Sy --noconfirm >/dev/null 2>&1 || true
+      echo "[+] Synchronizing package databases..."
+      if ! sudo pacman -Sy --noconfirm; then
+        echo "${RED}[!] Error: Failed to refresh pacman databases; aborting package installation.${RESET}" >&2
+        exit 1
+      fi
 
+      echo "[+] Checking package availability against synchronized repositories..."
       available_native=()
       for pkg in "${all_native_pkgs[@]}"; do
         if pacman -Si "$pkg" &>/dev/null; then
