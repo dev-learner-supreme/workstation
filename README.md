@@ -108,10 +108,60 @@ Run once after initial restoration:
    omarchy-powerprofiles-set ac balanced
    ```
 
-4. **SSH Agent Socket:**
+---
+
+## Omarchy SSH Configuration & Authentication
+
+Omarchy 4 (Arch + Hyprland/uwsm) utilizes systemd user socket activation for SSH agent management. This ensures seamless agent sharing across all terminals, IDEs, and desktop sessions without redundant agent processes.
+
+### How It Operates
+* **Systemd Socket:** `ssh-agent.socket` runs as a user unit, exposing `${XDG_RUNTIME_DIR}/ssh-agent.socket`. (Auto-enabled by `setup.sh`).
+* **Session Environment:** `~/.config/environment.d/ssh_auth_socket.conf` guarantees `SSH_AUTH_SOCK` is exported system-wide to uwsm and Hyprland.
+* **Auto-Key Loading:** `~/.ssh/config` includes `AddKeysToAgent yes`. Running `ssh` or `git` automatically registers the key in the agent upon initial passphrase entry.
+
+### Setup Instructions on Fresh Install
+
+#### Option A: Restoring Your Backed-Up SSH Key (Recommended)
+1. Copy your backed-up `id_ed25519` and `id_ed25519.pub` to `~/.ssh/`.
+2. Secure permissions:
+   ```bash
+   chmod 700 ~/.ssh
+   chmod 600 ~/.ssh/id_ed25519
+   chmod 644 ~/.ssh/id_ed25519.pub
+   ```
+3. Load the key into the active session agent:
+   ```bash
+   ssh-add ~/.ssh/id_ed25519
+   ```
+4. Verify GitHub authentication:
+   ```bash
+   ssh -T git@github.com
+   # Hi dev-learner-supreme! You've successfully authenticated...
+   ```
+
+#### Option B: Generating a Fresh SSH Key on Omarchy
+If you did not back up your key and need to generate a new one:
+1. Generate a modern Ed25519 keypair:
+   ```bash
+   ssh-keygen -t ed25519 -C "arunraobalappa@gmail.com" -f ~/.ssh/id_ed25519
+   ```
+2. Enable the agent socket (if not already enabled by `setup.sh`):
    ```bash
    systemctl --user enable --now ssh-agent.socket
-   ssh-add
+   ```
+3. Add the key to the agent:
+   ```bash
+   ssh-add ~/.ssh/id_ed25519
+   ```
+4. Copy your public key to clipboard:
+   ```bash
+   wl-copy < ~/.ssh/id_ed25519.pub
+   # or cat ~/.ssh/id_ed25519.pub
+   ```
+5. Add the key under **GitHub Settings -> SSH and GPG keys**.
+6. Verify connection:
+   ```bash
+   ssh -T git@github.com
    ```
 
 ---

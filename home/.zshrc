@@ -104,11 +104,14 @@ done
 unset _zsh_sh
 
 # ==============================================================================
-# SSH Key Management (Keychain)
+# SSH Key Management (systemd user socket on Omarchy / keychain fallback on WSL)
 # ==============================================================================
-# Auto-loads ssh-agent and caches keys across all WSL sessions/tabs
-if command -v keychain &>/dev/null; then
-  eval $(keychain --eval --agents ssh --nogui -q id_ed25519)
+if [[ -z "$SSH_AUTH_SOCK" ]]; then
+  if [[ -S "${XDG_RUNTIME_DIR}/ssh-agent.socket" ]]; then
+    export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket"
+  elif command -v keychain &>/dev/null; then
+    eval $(keychain --eval --agents ssh --nogui -q id_ed25519 2>/dev/null)
+  fi
 fi
 
 

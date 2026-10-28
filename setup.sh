@@ -144,6 +144,13 @@ if [[ -d "$REPO_DIR/home" ]]; then
     [[ -f "$HOME/.ssh/config" ]] && chmod 600 "$HOME/.ssh/config" 2>/dev/null || true
   fi
 
+  # Enable user ssh-agent.socket (standard Omarchy SSH mechanism)
+  if systemctl --user is-system-running &>/dev/null || [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+    echo "[+] Enabling systemd user ssh-agent.socket..."
+    systemctl --user daemon-reload 2>/dev/null || true
+    systemctl --user enable --now ssh-agent.socket 2>/dev/null || true
+  fi
+
   # Make executables in .local/bin executable
   if [[ -d "$HOME/.local/bin" ]]; then
     chmod +x "$HOME/.local/bin/"* 2>/dev/null || true
@@ -216,9 +223,8 @@ echo ""
 echo "  3. ${BOLD}Power Profile (AC Balanced):${RESET}"
 echo "     omarchy-powerprofiles-set ac balanced"
 echo ""
-echo "  4. ${BOLD}SSH Key / Agent:${RESET}"
-echo "     systemctl --user enable --now ssh-agent.socket"
-echo "     ssh-add"
+echo "  4. ${BOLD}SSH Authentication:${RESET}"
+echo "     ssh-add ~/.ssh/id_ed25519 (ssh-agent.socket enabled automatically)"
 echo ""
 echo "  5. ${BOLD}Restart Session:${RESET}"
 echo "     Log out and log back in to apply group changes ('uucp') and Hyprland bindings."
