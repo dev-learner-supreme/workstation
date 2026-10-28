@@ -71,6 +71,15 @@ cd ~/workstation
 
 ---
 
+## Authentication & System Stability Policy (Stock PAM)
+
+To prevent session freezes, sleep/wake lockups, and rolling update conflicts:
+* **Zero PAM Modifications:** `/etc/pam.d/` remains 100% stock Arch Linux / Omarchy defaults.
+* **Password-Only Authentication:** Experimental EgisTec fingerprint drivers (`libfprint-egismoc-sdcp`), custom lockscreen QML forks (`arun.lock`), and pacman `IgnorePkg` hooks are strictly excluded.
+* **Guaranteed Reliability:** `sudo`, `polkit-1`, and lock screen wake up instantly without USB state machine assertion crashes or hanging authentication daemons.
+
+---
+
 ## Package Management Policy
 
 Per workstation policy, packages are reviewed and installed via Omarchy or Pacman:

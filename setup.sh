@@ -66,6 +66,9 @@ fi
 # ==============================================================================
 # 2. System Hardware & Power Configuration (Root)
 # ==============================================================================
+# Note: PAM stacks (/etc/pam.d/) and biometric authentication are intentionally
+# kept 100% stock to guarantee clean sleep/wake cycles, update stability, and
+# zero lockout risks. Only power-capping configs are deployed to root.
 echo ""
 echo "${BOLD}${YELLOW}--- [2/5] System & Power Capping Configuration ---${RESET}"
 
