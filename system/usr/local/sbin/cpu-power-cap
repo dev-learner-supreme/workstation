@@ -1,0 +1,17 @@
+#!/bin/bash
+# Apply PL1/PL2/tau to both RAPL interfaces (MSR + MMIO); only writes on drift.
+set -u
+. /etc/default/cpu-power-cap
+pl1=$((PL1_W*1000000)) pl2=$((PL2_W*1000000)) tau=$((TAU_S*1000000))
+w() { [[ -w $1 ]] || return 0; [[ $(<"$1") == "$2" ]] && return 0
+      echo "$2" >"$1" 2>/dev/null && logger -t cpu-power-cap "set $1=$2" || logger -t cpu-power-cap "FAILED $1=$2"; }
+for z in /sys/class/powercap/intel-rapl:0 /sys/class/powercap/intel-rapl-mmio:0; do
+  [[ -d $z && $(<"$z/name") == package-0 ]] || continue
+  w "$z/constraint_0_power_limit_uw" "$pl1"
+  w "$z/constraint_1_power_limit_uw" "$pl2"
+  # kernel rounds tau to the nearest RAPL step; only rewrite if off by >5%
+  cur=$(<"$z/constraint_0_time_window_us")
+  (( cur < tau*95/100 || cur > tau*105/100 )) && w "$z/constraint_0_time_window_us" "$tau"
+  w "$z/enabled" 1
+done
+exit 0

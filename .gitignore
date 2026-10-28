@@ -1,0 +1,24 @@
+# Credentials & secrets
+*.pem
+*.key
+*.p12
+*.keystore
+id_rsa*
+id_ed25519*
+.env
+.env.*
+!.env.example
+
+# Temporary and cache files
+__pycache__/
+*.py[cod]
+.cache/
+.tmp/
+*.swp
+*.bak
+*~
+.DS_Store
+
+# Virtual environments
+.venv/
+venv/

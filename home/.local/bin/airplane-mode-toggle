@@ -1,0 +1,11 @@
+#!/bin/bash
+# Toggle airplane mode: block all radios (Wi-Fi + Bluetooth), or unblock them all.
+# Works without root via the session's uaccess ACL on /dev/rfkill.
+
+if rfkill -n -o SOFT | grep -q '^unblocked$'; then
+  rfkill block all
+  omarchy-notification-send -u low "Airplane mode on"
+else
+  rfkill unblock all
+  omarchy-notification-send -u low "Airplane mode off"
+fi

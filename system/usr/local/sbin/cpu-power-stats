@@ -1,0 +1,59 @@
+#!/bin/bash
+# Append one sample per run to /var/log/cpu-power-stats.csv (run every minute by
+# cpu-power-stats.timer). Package power is averaged over the whole interval since
+# the previous run, so the root-only RAPL energy counter is never exposed at a
+# resolution useful for side channels.
+set -u
+LOG=/var/log/cpu-power-stats.csv
+STATE=/run/cpu-power-stats.last
+KEEP=20160 # ~14 days at one sample per minute
+MSR=/sys/class/powercap/intel-rapl:0
+MMIO=/sys/class/powercap/intel-rapl-mmio:0
+
+zone_temp() { # $1 = thermal zone type, prints degrees C
+  local z
+  for z in /sys/class/thermal/thermal_zone*; do
+    [[ $(<"$z/type") == "$1" ]] && { awk '{printf "%.1f", $1/1000}' "$z/temp"; return; }
+  done
+}
+uw_to_w() { [[ -r $1 ]] && awk '{printf "%g", $1/1000000}' "$1"; }
+
+now=$(date +%s%N)
+energy=$(<"$MSR/energy_uj")
+range=$(<"$MSR/max_energy_range_uj")
+pkg_w=""
+if [[ -r $STATE ]]; then
+  read -r prev_t prev_e <"$STATE"
+  dt=$((now - prev_t))
+  de=$((energy - prev_e))
+  ((de < 0)) && de=$((de + range))
+  # skip intervals spanning suspend or downtime (> 5 min)
+  ((dt > 20000000000 && dt < 300000000000)) && pkg_w=$(awk -v de="$de" -v dt="$dt" 'BEGIN { printf "%.2f", de * 1000 / dt }')
+fi
+echo "$now $energy" >"$STATE"
+
+ac=""
+for p in /sys/class/power_supply/*; do [[ $(<"$p/type") == Mains ]] && ac=$(<"$p/online"); done
+bat_w=""
+for p in /sys/class/power_supply/BAT*; do
+  [[ -r $p/power_now && $(<"$p/status") == Discharging ]] && bat_w=$(uw_to_w "$p/power_now")
+done
+freq=$(awk '{ s += $1; n++ } END { if (n) printf "%.0f", s / n / 1000 }' /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq)
+epp=$(</sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference)
+tt=/sys/devices/system/cpu/cpu0/thermal_throttle
+load1=$(cut -d' ' -f1 /proc/loadavg)
+
+[[ -s $LOG ]] || echo "time,pkg_w,pkg_temp_c,tcpu_c,pl1_msr_w,pl2_msr_w,pl1_mmio_w,pl2_mmio_w,pkg_throttle_count,pkg_throttle_ms,ac,bat_w,freq_mhz,epp,load1" >"$LOG"
+printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
+  "$(date -Iseconds)" "$pkg_w" "$(zone_temp x86_pkg_temp)" "$(zone_temp TCPU_PCI)" \
+  "$(uw_to_w $MSR/constraint_0_power_limit_uw)" "$(uw_to_w $MSR/constraint_1_power_limit_uw)" \
+  "$(uw_to_w $MMIO/constraint_0_power_limit_uw)" "$(uw_to_w $MMIO/constraint_1_power_limit_uw)" \
+  "$(<$tt/package_throttle_count)" "$(<$tt/package_throttle_total_time_ms)" \
+  "$ac" "$bat_w" "$freq" "$epp" "$load1" >>"$LOG"
+chmod 644 "$LOG"
+
+lines=$(wc -l <"$LOG")
+if ((lines > KEEP + 1000)); then
+  { head -1 "$LOG"; tail -n "$KEEP" "$LOG"; } >"$LOG.tmp" && mv "$LOG.tmp" "$LOG" && chmod 644 "$LOG"
+fi
+exit 0

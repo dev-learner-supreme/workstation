@@ -1,0 +1,7 @@
+[Unit]
+Description=Log CPU package power and thermals (one sample)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/cpu-power-stats
+Nice=10

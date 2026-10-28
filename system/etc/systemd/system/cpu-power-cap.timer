@@ -1,0 +1,10 @@
+[Unit]
+Description=Re-apply CPU power cap
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=60s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

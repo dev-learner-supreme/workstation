@@ -1,0 +1,54 @@
+-- Keep only your personal keybinding overrides here. Add new bindings or
+-- unbind defaults before replacing them.
+
+-- See current bindings and descriptions:
+--   omarchy menu keybindings --print
+
+-- To disable every Omarchy default binding, set this in
+-- ~/.config/hypr/hyprland.lua before require("default.hypr.omarchy"), then add
+-- only the bindings you want below:
+--   omarchy_default_bindings = false
+
+-- To disable all preinstalled app/webapp bindings, set:
+--   omarchy_preinstalled_bindings = false
+
+-- Add a new binding.
+-- o.bind("SUPER + SHIFT + R", "SSH", "alacritty -e ssh your-server")
+
+-- Change an existing binding by unbinding it first, then binding the key again.
+-- This example changes SUPER+SPACE from the launcher to the Omarchy root menu.
+-- hl.unbind("SUPER + SPACE")
+-- o.bind("SUPER + SPACE", "Omarchy menu", "omarchy-menu toggle root")
+
+-- Disable a default binding without replacing it.
+-- hl.unbind("SUPER + SHIFT + B")
+
+-- Logitech MX Keys examples:
+-- o.bind("SUPER + SHIFT + S", nil, "omarchy-capture-screenshot")
+-- o.bind("SUPER + H", nil, "voxtype record toggle")
+-- o.bind("SUPER + PERIOD", nil, "omarchy-shell shell toggle omarchy.emojis")
+
+-- Personal shortcuts ---------------------------------------------------------
+
+-- Screenshot (was: Google Maps web app)
+hl.unbind("SUPER + SHIFT + S")
+o.bind("SUPER + SHIFT + S", "Screenshot", "omarchy-capture-screenshot")
+
+-- App launcher on ALT + SPACE (moved from SUPER + ALT + SPACE)
+hl.unbind("SUPER + ALT + SPACE")
+o.bind("ALT + SPACE", "Apps menu", "omarchy-menu toggle apps")
+
+-- Function keys
+o.bind("F4", "Mute microphone", "omarchy-audio-input-mute", { locked = true })
+o.bind("F8", "Lock system", "omarchy-system-lock")
+o.bind("F9", "Toggle airplane mode", "airplane-mode-toggle", { locked = true })
+o.bind_toggle("F10", "Toggle touchpad", "touchpad", { locked = true })
+
+-- Acer function row without Fn: F4 sends XF86Launch6, F8 sends SUPER + L
+-- (the Windows lock shortcut, emulated by the keyboard firmware).
+o.bind("XF86Launch6", "Mute microphone", "omarchy-audio-input-mute", { locked = true })
+
+-- SUPER + L locks (was: Toggle workspace layout, moved to SUPER + SHIFT + L)
+hl.unbind("SUPER + L")
+o.bind("SUPER + L", "Lock system", "omarchy-system-lock")
+o.bind("SUPER + SHIFT + L", "Toggle workspace layout", "omarchy-hyprland-workspace-layout-toggle")

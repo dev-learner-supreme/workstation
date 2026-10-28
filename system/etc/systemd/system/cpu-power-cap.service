@@ -1,0 +1,10 @@
+[Unit]
+Description=Apply CPU RAPL power cap
+After=thermald.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/cpu-power-cap
+
+[Install]
+WantedBy=multi-user.target
