@@ -131,21 +131,24 @@ except Exception: pass
 fi
 
 # ------------------------------------------------------------------------------
-# 5. Security Scanner (Refuse commit if secret-like pattern matches)
+# 5. Selective Staging & Security Diff Scanner
 # ------------------------------------------------------------------------------
-SECRET_PATTERN='-----BEGIN [A-Z ]*PRIVATE KEY-----|"(accessToken|refreshToken)"|gh[pousr]_[A-Za-z0-9]{30,}|sk-ant-[A-Za-z0-9_-]{20,}|AIzaSy[A-Za-z0-9_-]{33}'
+# Explicitly stage known repository targets (avoiding accidental root pollution)
+git add home system state agent README.md setup.sh sync.sh .gitignore
 
-if grep -rIlE --exclude-dir='.git' -e "$SECRET_PATTERN" home system state agent 2>/dev/null; then
-  echo "[!] Security Warning: Possible secret or API key detected in staged files." >&2
-  echo "    Aborting commit. Clean credentials before syncing." >&2
+# Comprehensive secret pattern detection
+SECRET_PATTERN='-----BEGIN [A-Z ]*PRIVATE KEY-----|"(accessToken|refreshToken|client_secret|apiKey|api_key|password)"|gh[pousr]_[A-Za-z0-9]{30,}|sk-ant-[A-Za-z0-9_-]{20,}|AIzaSy[A-Za-z0-9_-]{33}|xox[baprs]-[A-Za-z0-9]{10,}|glpat-[A-Za-z0-9_-]{20,}'
+
+if git diff --cached | grep -E "$SECRET_PATTERN" >/dev/null 2>&1; then
+  echo "[!] Security Warning: Possible secret, private key, or credential detected in staged changes." >&2
+  echo "    Aborting commit. Staged diff matched secret scanner patterns." >&2
+  git reset -q HEAD --
   exit 1
 fi
 
 # ------------------------------------------------------------------------------
 # 6. Commit & Push
 # ------------------------------------------------------------------------------
-git add -A
-
 if git diff --cached --quiet; then
   echo "[*] Workstation state clean. No changes to commit."
 else

@@ -1,59 +1,127 @@
 #!/bin/bash
-# Append one sample per run to /var/log/cpu-power-stats.csv (run every minute by
-# cpu-power-stats.timer). Package power is averaged over the whole interval since
-# the previous run, so the root-only RAPL energy counter is never exposed at a
-# resolution useful for side channels.
-set -u
-LOG=/var/log/cpu-power-stats.csv
-STATE=/run/cpu-power-stats.last
-KEEP=20160 # ~14 days at one sample per minute
-MSR=/sys/class/powercap/intel-rapl:0
-MMIO=/sys/class/powercap/intel-rapl-mmio:0
+# ==============================================================================
+# CPU Power & Telemetry Statistics Logger
+# Appends one sample per minute to /var/log/cpu-power-stats.csv
+# ==============================================================================
+set -euo pipefail
 
-zone_temp() { # $1 = thermal zone type, prints degrees C
+LOG="/var/log/cpu-power-stats.csv"
+STATE="/run/cpu-power-stats.last"
+KEEP=20160 # ~14 days at 1 sample/minute
+
+MSR="/sys/class/powercap/intel-rapl:0"
+MMIO="/sys/class/powercap/intel-rapl-mmio:0"
+
+safe_read() {
+  local file="$1"
+  local default="${2:-}"
+  if [[ -r "$file" ]]; then
+    cat "$file" 2>/dev/null || echo "$default"
+  else
+    echo "$default"
+  fi
+}
+
+zone_temp() {
+  local target="$1"
   local z
   for z in /sys/class/thermal/thermal_zone*; do
-    [[ $(<"$z/type") == "$1" ]] && { awk '{printf "%.1f", $1/1000}' "$z/temp"; return; }
+    if [[ -d "$z" && "$(safe_read "$z/type")" == "$target" ]]; then
+      local raw
+      raw="$(safe_read "$z/temp")"
+      if [[ -n "$raw" && "$raw" =~ ^[0-9]+$ ]]; then
+        awk -v t="$raw" 'BEGIN { printf "%.1f", t / 1000 }'
+        return
+      fi
+    fi
   done
+  echo ""
 }
-uw_to_w() { [[ -r $1 ]] && awk '{printf "%g", $1/1000000}' "$1"; }
 
-now=$(date +%s%N)
-energy=$(<"$MSR/energy_uj")
-range=$(<"$MSR/max_energy_range_uj")
+uw_to_w() {
+  local file="$1"
+  local raw
+  raw="$(safe_read "$file")"
+  if [[ -n "$raw" && "$raw" =~ ^[0-9]+$ ]]; then
+    awk -v val="$raw" 'BEGIN { printf "%g", val / 1000000 }'
+  else
+    echo ""
+  fi
+}
+
+now="$(date +%s%N)"
+energy="$(safe_read "$MSR/energy_uj")"
+range="$(safe_read "$MSR/max_energy_range_uj" "0")"
+
 pkg_w=""
-if [[ -r $STATE ]]; then
-  read -r prev_t prev_e <"$STATE"
-  dt=$((now - prev_t))
-  de=$((energy - prev_e))
-  ((de < 0)) && de=$((de + range))
-  # skip intervals spanning suspend or downtime (> 5 min)
-  ((dt > 20000000000 && dt < 300000000000)) && pkg_w=$(awk -v de="$de" -v dt="$dt" 'BEGIN { printf "%.2f", de * 1000 / dt }')
+if [[ -n "$energy" && -n "$range" && -r "$STATE" ]]; then
+  if read -r prev_t prev_e <"$STATE" 2>/dev/null; then
+    if [[ "$prev_t" =~ ^[0-9]+$ && "$prev_e" =~ ^[0-9]+$ && "$energy" =~ ^[0-9]+$ && "$range" =~ ^[0-9]+$ ]]; then
+      dt=$((now - prev_t))
+      de=$((energy - prev_e))
+      (( de < 0 )) && de=$((de + range))
+      # Sample window: valid between 20s and 300s (filters out long suspend intervals)
+      if (( dt > 20000000000 && dt < 300000000000 )); then
+        pkg_w=$(awk -v de="$de" -v dt="$dt" 'BEGIN { printf "%.2f", de * 1000 / dt }')
+      fi
+    fi
+  fi
 fi
-echo "$now $energy" >"$STATE"
 
+if [[ -n "$energy" ]]; then
+  echo "$now $energy" >"$STATE" 2>/dev/null || true
+fi
+
+# AC status
 ac=""
-for p in /sys/class/power_supply/*; do [[ $(<"$p/type") == Mains ]] && ac=$(<"$p/online"); done
+for p in /sys/class/power_supply/*; do
+  if [[ -d "$p" && "$(safe_read "$p/type")" == "Mains" ]]; then
+    ac="$(safe_read "$p/online")"
+    break
+  fi
+done
+
+# Battery discharge wattage
 bat_w=""
 for p in /sys/class/power_supply/BAT*; do
-  [[ -r $p/power_now && $(<"$p/status") == Discharging ]] && bat_w=$(uw_to_w "$p/power_now")
+  if [[ -d "$p" && "$(safe_read "$p/status")" == "Discharging" ]]; then
+    bat_w="$(uw_to_w "$p/power_now")"
+    break
+  fi
 done
-freq=$(awk '{ s += $1; n++ } END { if (n) printf "%.0f", s / n / 1000 }' /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq)
-epp=$(</sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference)
-tt=/sys/devices/system/cpu/cpu0/thermal_throttle
-load1=$(cut -d' ' -f1 /proc/loadavg)
 
-[[ -s $LOG ]] || echo "time,pkg_w,pkg_temp_c,tcpu_c,pl1_msr_w,pl2_msr_w,pl1_mmio_w,pl2_mmio_w,pkg_throttle_count,pkg_throttle_ms,ac,bat_w,freq_mhz,epp,load1" >"$LOG"
+# Average CPU frequency
+freq=$(awk '{ s += $1; n++ } END { if (n && n > 0) printf "%.0f", s / n / 1000 }' /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq 2>/dev/null || echo "")
+
+# Energy performance preference
+epp="$(safe_read /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference)"
+
+# Throttle telemetry
+tt="/sys/devices/system/cpu/cpu0/thermal_throttle"
+throttle_count="$(safe_read "$tt/package_throttle_count" "0")"
+throttle_ms="$(safe_read "$tt/package_throttle_total_time_ms" "0")"
+
+# Load average
+load1="$(cut -d' ' -f1 /proc/loadavg 2>/dev/null || echo "")"
+
+# Ensure CSV header
+if [[ ! -s "$LOG" ]]; then
+  mkdir -p "$(dirname "$LOG")"
+  echo "time,pkg_w,pkg_temp_c,tcpu_c,pl1_msr_w,pl2_msr_w,pl1_mmio_w,pl2_mmio_w,pkg_throttle_count,pkg_throttle_ms,ac,bat_w,freq_mhz,epp,load1" >"$LOG"
+fi
+
 printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
   "$(date -Iseconds)" "$pkg_w" "$(zone_temp x86_pkg_temp)" "$(zone_temp TCPU_PCI)" \
-  "$(uw_to_w $MSR/constraint_0_power_limit_uw)" "$(uw_to_w $MSR/constraint_1_power_limit_uw)" \
-  "$(uw_to_w $MMIO/constraint_0_power_limit_uw)" "$(uw_to_w $MMIO/constraint_1_power_limit_uw)" \
-  "$(<$tt/package_throttle_count)" "$(<$tt/package_throttle_total_time_ms)" \
+  "$(uw_to_w "$MSR/constraint_0_power_limit_uw")" "$(uw_to_w "$MSR/constraint_1_power_limit_uw")" \
+  "$(uw_to_w "$MMIO/constraint_0_power_limit_uw")" "$(uw_to_w "$MMIO/constraint_1_power_limit_uw")" \
+  "$throttle_count" "$throttle_ms" \
   "$ac" "$bat_w" "$freq" "$epp" "$load1" >>"$LOG"
-chmod 644 "$LOG"
+chmod 644 "$LOG" 2>/dev/null || true
 
-lines=$(wc -l <"$LOG")
-if ((lines > KEEP + 1000)); then
+# Prune old records if exceeding retention
+lines=$(wc -l <"$LOG" 2>/dev/null || echo "0")
+if (( lines > KEEP + 1000 )); then
   { head -1 "$LOG"; tail -n "$KEEP" "$LOG"; } >"$LOG.tmp" && mv "$LOG.tmp" "$LOG" && chmod 644 "$LOG"
 fi
+
 exit 0
