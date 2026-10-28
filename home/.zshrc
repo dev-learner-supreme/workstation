@@ -1,4 +1,14 @@
 # ==============================================================================
+# Omarchy Core Shell Integration
+# ==============================================================================
+# If not running interactively, don't do anything
+[[ $- != *i* ]] && return
+
+# Load Omarchy system zsh options & shared environment if installed
+[[ -f /usr/share/omarchy-zsh/shell/zoptions ]] && source /usr/share/omarchy-zsh/shell/zoptions
+[[ -f /usr/share/omarchy-zsh/shell/all ]] && source /usr/share/omarchy-zsh/shell/all
+
+# ==============================================================================
 # Environment & Editor
 # ==============================================================================
 export EDITOR='micro'
@@ -67,6 +77,17 @@ fi
 # zoxide (smarter cd -> type 'z <dir>')
 if command -v zoxide &>/dev/null; then
   eval "$(zoxide init zsh)"
+fi
+
+# Cross-tool compatibility (fdfind/fd, batcat/bat)
+if command -v fd &>/dev/null && ! command -v fdfind &>/dev/null; then
+  alias fdfind='fd'
+elif command -v fdfind &>/dev/null && ! command -v fd &>/dev/null; then
+  alias fd='fdfind'
+fi
+
+if command -v bat &>/dev/null && ! command -v batcat &>/dev/null; then
+  alias batcat='bat'
 fi
 
 # eza aliases (modern ls replacement)

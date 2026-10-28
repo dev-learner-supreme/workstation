@@ -11,7 +11,7 @@ Consolidates OS-level tuning, power capping, audio routing, desktop bindings, an
 Follow these steps chronologically on a clean Omarchy 4 installation:
 
 ```
-[ Step 1: SSH Auth ] ──► [ Step 2: Clone Repo ] ──► [ Step 3: Run setup.sh ] ──► [ Step 4: Packages ] ──► [ Step 5: Post-Install ]
+[ Step 1: SSH Auth ] ──► [ Step 2: Clone Repo ] ──► [ Step 3: Run setup.sh ] ──► [ Step 4: Post-Install Checklist ]
 ```
 
 ---
@@ -64,31 +64,17 @@ cd ~/workstation
 ```
 
 #### What `setup.sh` Automates:
+* **Package Installation:** Prompts and installs all official packages (`pacman-explicit.txt`), AUR packages (`pacman-foreign.txt`), and Flatpaks (`flatpak.txt`).
 * **Root Power Capping:** Deploys `/etc/default/cpu-power-cap` and `/usr/local/sbin/cpu-power-*`, then enables `cpu-power-cap.timer` and `cpu-power-stats.timer`.
 * **Hardware Permissions:** Adds user to `uucp` and `dialout` groups for direct ESP32/serial access.
-* **Dotfiles Deployment:** Restores configs from `home/` to `$HOME` (creates timestamped backups of any conflicting files).
+* **Desktop & Dotfiles:** Restores configs from `home/` to `$HOME` with automatic backup of pre-existing files. Configures Foot terminal with `shell=/usr/bin/zsh` and readable font sizing (13pt) on 2.8K OLED.
+* **Safe Shell Architecture:** Preserves `/bin/bash` as system login shell for Omarchy OS stability while granting an interactive Zsh experience with `omarchy-zsh`, `fzf`, `zoxide`, `eza`, `starship`, and syntax highlighting.
 * **SSH Integration:** Deploys `~/.config/environment.d/ssh-agent.conf`, sets `AddKeysToAgent yes`, and live-exports `SSH_AUTH_SOCK`.
-* **Agent Brain Linking:** Symlinks `~/.agents -> ~/workstation/agent` and bridges Cursor (`~/.cursorrules`) and Claude Code (`~/CLAUDE.md`).
+* **Agent Brain & Bridges:** Symlinks `~/.agents -> ~/workstation/agent`, connects Cursor (`~/.cursorrules`) and Claude Code (`~/CLAUDE.md`), installs all skills, and injects Spaces hooks into `~/.claude/settings.json`.
 
 ---
 
-### Step 4: Package Installation & Review
-In accordance with workstation policy, packages are reviewed and installed via Omarchy or Pacman:
-
-```bash
-# 1. Install official pacman packages
-sudo pacman -S --needed - < state/pacman-explicit.txt
-
-# 2. Install AUR packages via yay
-yay -S --needed - < state/pacman-foreign.txt
-
-# 3. (Optional) Install individual tools via Omarchy CLI
-omarchy package install <package-name>
-```
-
----
-
-### Step 5: Post-Install Manual Steps
+### Step 4: Post-Install Manual Steps
 
 Execute these one-time system settings:
 

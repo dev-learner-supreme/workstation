@@ -161,4 +161,6 @@ zbar
 zed
 zoxide
 zram-generator
+zsh
 zsh-autosuggestions
+zsh-syntax-highlighting

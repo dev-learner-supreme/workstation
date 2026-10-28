@@ -39,23 +39,75 @@ SUDO_PID=$!
 trap 'kill "$SUDO_PID" 2>/dev/null || true' EXIT
 
 # ==============================================================================
-# 1. Package Installation Guidance (Manual via Omarchy / Pacman)
+# 1. Package Installation (Pacman & Flatpak)
 # ==============================================================================
-echo "${BOLD}${YELLOW}--- [1/5] Package Installation Guidance ---${RESET}"
-echo "In accordance with your policy, package installations should be verified"
-echo "and executed via Omarchy or Pacman directly."
-echo ""
-echo "Recorded explicit pacman packages:  ${BOLD}$(wc -l < "$REPO_DIR/state/pacman-explicit.txt" 2>/dev/null || echo '0')${RESET} packages"
-echo "Recorded Flatpak applications:      ${BOLD}$(wc -l < "$REPO_DIR/state/flatpak.txt" 2>/dev/null || echo '0')${RESET} apps"
-echo ""
-echo "${BLUE}Commands for manual package review & install:${RESET}"
-echo "  ${BOLD}Pacman packages:${RESET}  sudo pacman -S --needed - < \"$REPO_DIR/state/pacman-explicit.txt\""
-echo "  ${BOLD}Foreign/AUR:${RESET}      yay -S --needed - < \"$REPO_DIR/state/pacman-foreign.txt\""
-echo "  ${BOLD}Omarchy packages:${RESET} omarchy package install <package-name>"
-echo ""
+echo "${BOLD}${YELLOW}--- [1/5] Package Installation ---${RESET}"
+PACMAN_STATE="$REPO_DIR/state/pacman-explicit.txt"
+FOREIGN_STATE="$REPO_DIR/state/pacman-foreign.txt"
+FLATPAK_STATE="$REPO_DIR/state/flatpak.txt"
 
-if [[ "${1:-}" != "--auto" && "${1:-}" != "-y" ]]; then
-  read -r -p "${BOLD}Proceed with system and dotfile configuration? [Y/n]: ${RESET}" PROCEED_INPUT
+AUTO_INSTALL=false
+if [[ "${1:-}" == "--auto" || "${1:-}" == "-y" ]]; then
+  AUTO_INSTALL=true
+fi
+
+# Pacman packages
+if [[ -f "$PACMAN_STATE" && -s "$PACMAN_STATE" ]]; then
+  pkg_count="$(wc -l < "$PACMAN_STATE")"
+  echo "Recorded explicit pacman packages: ${BOLD}$pkg_count${RESET}"
+
+  DO_PACMAN="Y"
+  if [[ "$AUTO_INSTALL" != "true" ]]; then
+    read -r -p "${BOLD}Install recorded pacman packages now via sudo pacman? [Y/n]: ${RESET}" DO_PACMAN
+    DO_PACMAN="${DO_PACMAN:-Y}"
+  fi
+
+  if [[ "$DO_PACMAN" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+    echo "[+] Installing explicit pacman packages..."
+    sudo pacman -S --needed --noconfirm - < "$PACMAN_STATE"
+    echo "${GREEN}[✓] Pacman packages installed successfully.${RESET}"
+  else
+    echo "${YELLOW}[!] Skipping pacman package installation.${RESET}"
+  fi
+fi
+
+# Foreign / AUR packages
+if [[ -f "$FOREIGN_STATE" && -s "$FOREIGN_STATE" ]]; then
+  if command -v yay &>/dev/null; then
+    echo "[+] Installing AUR packages via yay..."
+    yay -S --needed --noconfirm - < "$FOREIGN_STATE"
+    echo "${GREEN}[✓] AUR packages installed successfully.${RESET}"
+  else
+    echo "${YELLOW}[!] 'yay' not found; please install AUR packages manually:${RESET}"
+    echo "    yay -S --needed - < \"$FOREIGN_STATE\""
+  fi
+fi
+
+# Flatpak applications
+if [[ -f "$FLATPAK_STATE" && -s "$FLATPAK_STATE" ]] && command -v flatpak &>/dev/null; then
+  flatpak_count="$(wc -l < "$FLATPAK_STATE")"
+  echo "Recorded Flatpak applications: ${BOLD}$flatpak_count${RESET}"
+  
+  DO_FLATPAK="Y"
+  if [[ "$AUTO_INSTALL" != "true" ]]; then
+    read -r -p "${BOLD}Install recorded Flatpak applications? [Y/n]: ${RESET}" DO_FLATPAK
+    DO_FLATPAK="${DO_FLATPAK:-Y}"
+  fi
+
+  if [[ "$DO_FLATPAK" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+    echo "[+] Ensuring flathub remote is configured..."
+    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
+    while IFS=$'\t' read -r app origin; do
+      [[ -z "$app" ]] && continue
+      echo "[+] Installing flatpak: $app..."
+      flatpak install -y "${origin:-flathub}" "$app" 2>/dev/null || true
+    done < "$FLATPAK_STATE"
+    echo "${GREEN}[✓] Flatpak applications installed.${RESET}"
+  fi
+fi
+
+if [[ "$AUTO_INSTALL" != "true" ]]; then
+  read -r -p "${BOLD}Proceed with system power capping and dotfile configuration? [Y/n]: ${RESET}" PROCEED_INPUT
   PROCEED_INPUT="${PROCEED_INPUT:-Y}"
   if [[ ! "$PROCEED_INPUT" =~ ^[Yy]([Ee][Ss])?$ ]]; then
     echo "Configuration aborted by user."
@@ -194,6 +246,21 @@ if [[ -d "$AGENT_SOURCE" ]]; then
     if [[ ! -f "$HOME/.claude/settings.json" ]]; then
       cp "$AGENT_SOURCE/integrations/claude-settings.json" "$HOME/.claude/settings.json"
       echo "${GREEN}[✓] Claude Code Spaces hooks installed at ~/.claude/settings.json.${RESET}"
+    else
+      # Safely merge hooks into existing settings.json without losing user preferences
+      python3 -c "
+import json, sys
+src, dst = sys.argv[1], sys.argv[2]
+try:
+    with open(src) as f: b = json.load(f)
+    with open(dst) as f: t = json.load(f)
+    for k, v in b.items():
+        if k not in t or not t[k]: t[k] = v
+        elif isinstance(v, dict) and isinstance(t[k], dict): t[k].update(v)
+    with open(dst, 'w') as f: json.dump(t, f, indent=2)
+except Exception: pass
+" "$AGENT_SOURCE/integrations/claude-settings.json" "$HOME/.claude/settings.json" 2>/dev/null || true
+      echo "${GREEN}[✓] Claude Code Spaces hooks merged into ~/.claude/settings.json.${RESET}"
     fi
   fi
 
@@ -232,4 +299,8 @@ echo "     ssh-add ~/.ssh/id_ed25519 (ssh-agent.socket enabled automatically)"
 echo ""
 echo "  5. ${BOLD}Restart Session:${RESET}"
 echo "     Log out and log back in to apply group changes ('uucp') and Hyprland bindings."
+echo ""
+echo "  6. ${BOLD}Shell & Terminal Architecture:${RESET}"
+echo "     Foot terminal launches Zsh directly with size 13 font."
+echo "     System login shell is intentionally preserved as Bash to safeguard Omarchy OS stability."
 echo ""

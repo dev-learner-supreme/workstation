@@ -8,6 +8,14 @@ case $- in
       *) return;;
 esac
 
+# Auto-launch zsh for interactive sessions while keeping bash as system login shell
+if command -v zsh &>/dev/null; then
+  if [[ $(ps --no-header --pid=$PPID --format=comm 2>/dev/null) != "zsh" && -z "${BASH_EXECUTION_STRING:-}" && ${SHLVL:-1} -le 1 ]]; then
+    shopt -q login_shell && LOGIN_OPTION='--login' || LOGIN_OPTION=''
+    exec zsh $LOGIN_OPTION
+  fi
+fi
+
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
