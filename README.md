@@ -1,4 +1,4 @@
-# workstation
+# Workstation (Omarchy 4 / Arch Linux)
 
 Unified system configuration, hardware profiles, dotfiles, and AI agent intelligence for the **Acer Swift Go 14 (SFG14-71)** running **Omarchy 4** (Arch Linux + Hyprland).
 
@@ -6,9 +6,117 @@ Consolidates OS-level tuning, power capping, audio routing, desktop bindings, an
 
 ---
 
-## Repository Layout
+## ⚡ Quick Restoration Runbook (Fresh Omarchy 4 Install)
+
+Follow these steps chronologically on a clean Omarchy 4 installation:
 
 ```
+[ Step 1: SSH Auth ] ──► [ Step 2: Clone Repo ] ──► [ Step 3: Run setup.sh ] ──► [ Step 4: Packages ] ──► [ Step 5: Post-Install ]
+```
+
+---
+
+### Step 1: SSH Authentication Setup
+Because `workstation` and your work repositories are private, establish SSH authentication before cloning.
+
+#### Path A: Restoring Your Backed-Up Key (Recommended)
+1. Place your backed-up `id_ed25519` and `id_ed25519.pub` into `~/.ssh/`.
+2. Secure permissions:
+   ```bash
+   mkdir -p ~/.ssh
+   chmod 700 ~/.ssh
+   chmod 600 ~/.ssh/id_ed25519
+   chmod 644 ~/.ssh/id_ed25519.pub
+   ```
+3. Enable the native systemd agent socket and add key:
+   ```bash
+   systemctl --user enable --now ssh-agent.socket
+   ssh-add ~/.ssh/id_ed25519
+   ```
+4. Verify GitHub connection:
+   ```bash
+   ssh -T git@github.com
+   # Hi dev-learner-supreme! You've successfully authenticated...
+   ```
+
+#### Path B: Generating a Fresh Key (If No Backup)
+```bash
+ssh-keygen -t ed25519 -C "arunraobalappa@gmail.com" -f ~/.ssh/id_ed25519
+systemctl --user enable --now ssh-agent.socket
+ssh-add ~/.ssh/id_ed25519
+wl-copy < ~/.ssh/id_ed25519.pub  # Or cat ~/.ssh/id_ed25519.pub
+```
+*Add the copied public key to **GitHub → Settings → SSH and GPG keys**, then verify with `ssh -T git@github.com`.*
+
+---
+
+### Step 2: Clone Workstation Repository
+```bash
+git clone git@github.com:dev-learner-supreme/workstation.git ~/workstation
+cd ~/workstation
+```
+
+---
+
+### Step 3: Run Automated Restoration Script
+```bash
+./setup.sh
+```
+
+#### What `setup.sh` Automates:
+* **Root Power Capping:** Deploys `/etc/default/cpu-power-cap` and `/usr/local/sbin/cpu-power-*`, then enables `cpu-power-cap.timer` and `cpu-power-stats.timer`.
+* **Hardware Permissions:** Adds user to `uucp` and `dialout` groups for direct ESP32/serial access.
+* **Dotfiles Deployment:** Restores configs from `home/` to `$HOME` (creates timestamped backups of any conflicting files).
+* **SSH Integration:** Deploys `~/.config/environment.d/ssh-agent.conf`, sets `AddKeysToAgent yes`, and live-exports `SSH_AUTH_SOCK`.
+* **Agent Brain Linking:** Symlinks `~/.agents -> ~/workstation/agent` and bridges Cursor (`~/.cursorrules`) and Claude Code (`~/CLAUDE.md`).
+
+---
+
+### Step 4: Package Installation & Review
+In accordance with workstation policy, packages are reviewed and installed via Omarchy or Pacman:
+
+```bash
+# 1. Install official pacman packages
+sudo pacman -S --needed - < state/pacman-explicit.txt
+
+# 2. Install AUR packages via yay
+yay -S --needed - < state/pacman-foreign.txt
+
+# 3. (Optional) Install individual tools via Omarchy CLI
+omarchy package install <package-name>
+```
+
+---
+
+### Step 5: Post-Install Manual Steps
+
+Execute these one-time system settings:
+
+1. **Enable TRIM on LUKS2:**
+   ```bash
+   sudo cryptsetup refresh --allow-discards --persistent root
+   ```
+
+2. **Install Spaces Bar Plugin:**
+   ```bash
+   omarchy plugin add https://github.com/tornikegomareli/omarchy-spaces.git --enable
+   omarchy plugin disable omarchy.workspaces
+   ```
+
+3. **Set Balanced AC Power Profile:**
+   ```bash
+   omarchy-powerprofiles-set ac balanced
+   ```
+
+4. **Restart Session:**
+   * Log out and log back in (or reboot) to apply hardware group permissions (`uucp`) and Hyprland keybindings.
+
+---
+
+## 🏛️ System Architecture & Reference
+
+### Repository Layout
+```text
 workstation/
 ├── setup.sh                 # One-shot restoration & system configuration script
 ├── sync.sh                  # Unified snapshot & push script (with secret scanner)
@@ -24,6 +132,7 @@ workstation/
 │   ├── .bashrc
 │   ├── .zshrc
 │   ├── .ssh/config
+│   ├── .config/environment.d/ssh-agent.conf
 │   ├── .config/hypr/        # Hyprland bindings, looknfeel, input
 │   ├── .config/foot/        # Foot terminal
 │   ├── .config/easyeffects/ # Audio auto-gain (JackHack96 preset)
@@ -49,133 +158,31 @@ workstation/
 
 ---
 
-## Quick Restoration (Fresh Omarchy 4 Install)
-
-### 1. Clone Repository
-```bash
-git clone git@github.com:dev-learner-supreme/workstation.git ~/workstation
-cd ~/workstation
-```
-
-### 2. Run Restoration & Configuration Script
-```bash
-./setup.sh
-```
-
-`setup.sh` guides package installations manually via Omarchy/Pacman, and automatically executes:
-* Deploys `/etc/default/cpu-power-cap` and `/usr/local/sbin/cpu-power-cap`
-* Enables root systemd timers (`cpu-power-cap.timer`, `cpu-power-stats.timer`)
-* Grants ESP32 and serial hardware access (`usermod -aG uucp,dialout $USER`)
-* Restores desktop dotfiles to `$HOME` (creating timestamped backups of existing files)
-* Symlinks `~/.agents` to `workstation/agent` and bridges Cursor (`~/.cursorrules`) and Claude Code (`~/CLAUDE.md`)
-
----
-
-## Authentication & System Stability Policy (Stock PAM)
-
-To prevent session freezes, sleep/wake lockups, and rolling update conflicts:
+### Authentication & System Stability Policy (Stock PAM)
+To eliminate session freezes, sleep/wake lockups, and rolling update conflicts:
 * **Zero PAM Modifications:** `/etc/pam.d/` remains 100% stock Arch Linux / Omarchy defaults.
 * **Password-Only Authentication:** Experimental EgisTec fingerprint drivers (`libfprint-egismoc-sdcp`), custom lockscreen QML forks (`arun.lock`), and pacman `IgnorePkg` hooks are strictly excluded.
 * **Guaranteed Reliability:** `sudo`, `polkit-1`, and lock screen wake up instantly without USB state machine assertion crashes or hanging authentication daemons.
 
 ---
 
-## Package Management Policy
-
-Per workstation policy, packages are reviewed and installed via Omarchy or Pacman:
-
-```bash
-# Review & install explicit pacman packages
-sudo pacman -S --needed - < state/pacman-explicit.txt
-
-# Install AUR / foreign packages via yay
-yay -S --needed - < state/pacman-foreign.txt
-
-# Or install individual tools via Omarchy
-omarchy package install <package-name>
-```
+### Power & Thermal Management Profile
+Enforced via `/usr/local/sbin/cpu-power-cap` on the Intel Core i5-13500H:
+* **PL1 (Sustained):** 18 W
+* **PL2 (Burst):** 35 W
+* **Tau (Time Window):** 28 seconds
+* **Thermal Ceiling:** Package temperatures remain locked strictly below 83°C under sustained load, preserving battery longevity and quiet fan acoustics.
 
 ---
 
-## Post-Install Manual Steps
-
-Run once after initial restoration:
-
-1. **TRIM on LUKS2:**
-   ```bash
-   sudo cryptsetup refresh --allow-discards --persistent root
-   ```
-
-2. **Spaces Bar Plugin:**
-   ```bash
-   omarchy plugin add https://github.com/tornikegomareli/omarchy-spaces.git --enable
-   omarchy plugin disable omarchy.workspaces
-   ```
-
-3. **Balanced AC Power Profile:**
-   ```bash
-   omarchy-powerprofiles-set ac balanced
-   ```
+### Audio Stack Architecture
+* **Realtek ALC256 / Intel SOF:** Handled via PipeWire 1.6+ and WirePlumber 0.5+.
+* **Output Priority:** Bluetooth headphones (3000) > Wired 3.5mm headphones (2000) > Laptop speakers (1000) > HDMI/USB (50).
+* **Sound Processing:** EasyEffects with the JackHack96 *Advanced Auto Gain* preset autoloaded for laptop speakers; transparent fallback to *Flat* on headphones.
 
 ---
 
-## Omarchy SSH Configuration & Authentication
-
-Omarchy 4 (Arch + Hyprland/uwsm) utilizes systemd user socket activation for SSH agent management. This ensures seamless agent sharing across all terminals, IDEs, and desktop sessions without redundant agent processes.
-
-### How It Operates
-* **Systemd Socket:** `ssh-agent.socket` runs as a user unit, exposing `${XDG_RUNTIME_DIR}/ssh-agent.socket`. (Auto-enabled by `setup.sh`).
-* **Session Environment:** `~/.config/environment.d/ssh_auth_socket.conf` guarantees `SSH_AUTH_SOCK` is exported system-wide to uwsm and Hyprland.
-* **Auto-Key Loading:** `~/.ssh/config` includes `AddKeysToAgent yes`. Running `ssh` or `git` automatically registers the key in the agent upon initial passphrase entry.
-
-### Setup Instructions on Fresh Install
-
-#### Option A: Restoring Your Backed-Up SSH Key (Recommended)
-1. Copy your backed-up `id_ed25519` and `id_ed25519.pub` to `~/.ssh/`.
-2. Secure permissions:
-   ```bash
-   chmod 700 ~/.ssh
-   chmod 600 ~/.ssh/id_ed25519
-   chmod 644 ~/.ssh/id_ed25519.pub
-   ```
-3. Load the key into the active session agent:
-   ```bash
-   ssh-add ~/.ssh/id_ed25519
-   ```
-4. Verify GitHub authentication:
-   ```bash
-   ssh -T git@github.com
-   # Hi dev-learner-supreme! You've successfully authenticated...
-   ```
-
-#### Option B: Generating a Fresh SSH Key on Omarchy
-If you did not back up your key and need to generate a new one:
-1. Generate a modern Ed25519 keypair:
-   ```bash
-   ssh-keygen -t ed25519 -C "arunraobalappa@gmail.com" -f ~/.ssh/id_ed25519
-   ```
-2. Enable the agent socket (if not already enabled by `setup.sh`):
-   ```bash
-   systemctl --user enable --now ssh-agent.socket
-   ```
-3. Add the key to the agent:
-   ```bash
-   ssh-add ~/.ssh/id_ed25519
-   ```
-4. Copy your public key to clipboard:
-   ```bash
-   wl-copy < ~/.ssh/id_ed25519.pub
-   # or cat ~/.ssh/id_ed25519.pub
-   ```
-5. Add the key under **GitHub Settings -> SSH and GPG keys**.
-6. Verify connection:
-   ```bash
-   ssh -T git@github.com
-   ```
-
----
-
-## Snapshot & Synchronization
+## 🔄 Daily Synchronization (Snapshotting)
 
 To capture state changes (installed packages, desktop tweaks, agent memory) and push to GitHub:
 
@@ -184,4 +191,4 @@ To capture state changes (installed packages, desktop tweaks, agent memory) and 
 ~/workstation/sync.sh --push  # Snapshot, commit, and push to origin main
 ```
 
-> **Security Guard:** `sync.sh` contains an automated secret scanner that blocks commits if SSH private keys, Google API keys, or AI auth tokens are detected in the repository.
+> **Security Guard:** `sync.sh` contains an automated regex secret scanner that halts commits if private keys, API tokens, or session credentials are detected in staged files.
