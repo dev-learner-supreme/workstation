@@ -16,6 +16,16 @@
   * Dev: `final-15ec5`
   * Test: `project-agri-test-84e72`
   * Prod: `rodo-prod0226` (**STRICTLY OFF-LIMITS without explicit consent**)
+* **Active Operational State & System Invariants:**
+  * **Cloud Functions Parity:** Dev (`final-15ec5`) and Test (`project-agri-test-84e72`) strictly aligned at 76 functions each. Orphan test functions (`calculateTravelFare`, `calculator`, `floorValues`, `roundoff` on Dev; `api`, `resendOTP`, `requestProfileUpdate`, `verifyAndUpdateProfile`, `ssrprojectagritest84e72` on Test) purged.
+  * **Multi-Codebase Deploy Collision:** Simultaneous deployments across codebases with identical exported function names (e.g. `sendProfileUpdateEmailOtp` in `functions-core` and `functions-website`) cause CLI namespace failure. Always isolate deployments per codebase: `--only functions:functions-core:...`.
+  * **Users Subcollections Architecture:** Root `Users/{uid}` documents maintain `userType`, `hasAgentProfile`, and `subcollections` string array (`"Farms"`, `"Games"`, `"Tasks"`, `"Coupons"`, `"Badges"`, `"Debt"`) appended via `FieldValue.arrayUnion`. Backfill complete across Dev (33), Test (36), and Prod (742). Enables O(1) CMS user reads, eliminating ~150 `listCollections()` calls/page.
+  * **Firestore Batch Mutation Invariant:** Never modify the same document multiple times within one `WriteBatch`. In coupon generation, deduplicate user doc references in-memory using `Set`.
+  * **`AgentPresence` vs `rtdb_location_settings`:** `config/AgentPresence` on Dev is an unreferenced prototype doc. Active location pinging and presence is governed by `config/rtdb_location_settings` in Firestore and `in.co.rodo.utils.AgentPresence` in Android writing to RTDB `agent_locations/{uid}`.
+  * **Prod Section 5 Bugs (Pending Prod Release Gate):**
+    1. Composite index `WorkRequest (status ASC, createdAt ASC)` in repo and active on Dev/Test; pending deploy to Prod (`rodo-prod0226`) to fix 144 errors/3 days in `expireStaleWorkRequests`.
+    2. Orphan scheduled job `firebase-schedule-resetBooleans-asia-south1` calls deleted function daily with `NOT_FOUND` in Prod. Delete upon Prod release.
+    3. Gemini Secret: `analyzeSensor.js` strictly requires `GEMINI_API_KEY` from Secret Manager with `generativelanguage.googleapis.com` enabled.
 
 ---
 

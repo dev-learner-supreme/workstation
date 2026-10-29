@@ -49,3 +49,17 @@ Each functions codebase runs independently with its own `package.json` (Node 22)
 4. **Secret Hygiene:**
    - Service account keys must live outside the repository.
    - Never print, commit, or log secret keys or auth tokens.
+
+---
+
+## 4. Key Architectural Invariants
+
+1. **Multi-Codebase Deploy Namespace Collision:**
+   - When deploying via `firebase deploy --only functions:...`, avoid mixing codebases that export overlapping function names (e.g. `sendProfileUpdateEmailOtp` exported in both `functions-core` and `functions-website`).
+   - Isolate deployments by codebase target (`--only functions:functions-core:...`, `--only functions:functions-cron:...`) to prevent CLI registry aborts.
+2. **Firestore Batch Mutation Invariant:**
+   - A single document cannot be mutated multiple times within the same `WriteBatch`.
+   - In batch operations like `generateDailyCoupons`, track user doc references in an in-memory `Set` to prevent duplicate modifications in the same batch.
+3. **Users Root Document Schema:**
+   - Users collections require `userType` (default `"Farmer"`), `hasAgentProfile` (boolean), and `subcollections` (array of strings) at root.
+   - Any Cloud Function initializing or adding subcollections (`Farms`, `Games`, `Tasks`, `Coupons`, `Badges`, `Debt`) must append via `FieldValue.arrayUnion(...)`.
