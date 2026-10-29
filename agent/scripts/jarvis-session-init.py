@@ -459,7 +459,10 @@ def main():
                         f"{banner}\n\n"
                         "MANDATE: On turn 1 of every session, after /clear, or upon /resume: ALWAYS confirm J.A.R.V.I.S. operational "
                         "status by referencing the live telemetry matrix above."
-                    )
+                    ),
+                    "metadata": {
+                        "user_markdown": banner
+                    }
                 }
             }
         ]
