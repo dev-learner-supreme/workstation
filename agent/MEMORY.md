@@ -8,6 +8,10 @@
 * **Shell Architecture:** `/bin/bash` login shell for Omarchy stability; `foot` spawns `zsh` natively with size 13 JetBrainsMono Nerd Font. `SSH_AUTH_SOCK` bound to systemd user `ssh-agent.socket`.
 * **Desktop Plugins:** Spaces (`tornikegomareli.spaces` pinned at `458852c`) and Pomodoro (`techywilbur.pomodoro` pinned at `475b130c`) enabled; native workspaces disabled. Cursor theme: `breeze_cursors`.
 * **Mobile Toolchain (Android):** Standalone user-space install at `~/.local/share/android-studio` (AI-262.10968.63.2622.16730706) with CLI binary `~/.local/bin/studio` and launcher `~/.local/share/applications/android-studio.desktop`. User-space ownership allows internal self-updates without sudo and prevents Omarchy/pacman package drift. `ANDROID_HOME` configured to `~/Android/Sdk` in shells; `adb` active upon completing first-run wizard.
+  * **Debug Keystore:** Stored at `~/.android/debug.keystore` and symlinked to `~/.config/.android/debug.keystore` for XDG AGP compatibility.
+  * **SHA-1:** `E1:20:1F:CE:CB:1A:20:B6:38:D8:4A:52:7A:D0:9F:D1:D5:44:53:7C` (`e1201fcecb1a20b638d84a527ad09fd1d544537c`)
+  * **SHA-256:** `E8:66:49:80:AE:BF:E6:32:38:C1:CE:B9:82:DC:FC:CB:6B:5E:6A:0D:E8:90:16:99:85:4A:3F:66:0C:B5:AF:72` (`e8664980aebfe63238c1ceb982dcfccb6b5e6a0de8901699854a3f660cb5af72`)
+  * **Firebase Registration:** Added to Dev (`final-15ec5`) and Test (`project-agri-test-84e72`). Updated `google-services.json` downloaded into `app/src/dev/` and `app/src/staging/`.
 * **Target Projects:**
   * Dev: `final-15ec5`
   * Test: `project-agri-test-84e72`

@@ -71,6 +71,7 @@ intel-lpmd
 intel-media-driver
 intel-ucode
 inxi
+jdk25-openjdk
 jq
 kdenlive
 kernel-modules-hook
