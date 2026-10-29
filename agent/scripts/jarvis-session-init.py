@@ -160,14 +160,19 @@ def main():
     # Format JSON response according to Antigravity SessionStart hook contract
     # NOTE: Do NOT use "metadata" field because agy's ScrubInternalFields currently
     # panics with "type mismatch: cannot convert string to message" when traversing map values.
+    # We embed the pre-gathered banner and telemetry directly into the systemMessage so the model
+    # can output it immediately on turn 1 without making 4 exploratory bash tool calls.
     response = {
         "injectSteps": [
             {
                 "systemMessage": {
                     "systemMessage": (
-                        "J.A.R.V.I.S. PROTOCOL ENGAGED: Workspace rules, skills, and hardware telemetry verified nominal.\n"
-                        "On turn 1 of every session, after /clear, or upon /resume: ALWAYS confirm J.A.R.V.I.S. operational "
-                        "status with the canonical ASCII banner and live telemetry matrix, and consolidate previous session data."
+                        "J.A.R.V.I.S. PROTOCOL ENGAGED: Workspace rules, skills, and hardware telemetry verified nominal.\n\n"
+                        f"{banner}\n\n"
+                        "MANDATE: On turn 1 of every session, after /clear, or upon /resume: ALWAYS confirm J.A.R.V.I.S. operational "
+                        "status by immediately outputting the pre-gathered canonical ASCII banner and live telemetry matrix above. "
+                        "Do NOT execute bash commands or explore directories to re-run jarvis-session-init.py on turn 1—the fresh "
+                        "matrix is already provided above."
                     )
                 }
             }
