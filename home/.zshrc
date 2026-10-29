@@ -158,6 +158,15 @@ fi
 alias sync-agent="$HOME/.agents/sync.sh"
 alias agent-doctor="$HOME/.agents/skills/agent-health-check/scripts/doctor.sh"
 
+# J.A.R.V.I.S. Antigravity CLI Launcher with Auto-Prompt
+agy() {
+    if [ $# -eq 0 ]; then
+        command agy -i "System initialization: Report J.A.R.V.I.S. operational status and live telemetry."
+    else
+        command agy "$@"
+    fi
+}
+
 # ==============================================================================
 # Navigation & Quick Directory Jump Aliases
 # ==============================================================================
