@@ -230,12 +230,21 @@ def generate_markdown_banner(m):
 """
 
 def generate_rich_hud(m):
+    import shutil
     from rich.console import Console
     from rich.table import Table
     from rich.panel import Panel
     from rich import box
 
-    console = Console(width=96, height=30)
+    # Dynamically detect terminal width (respecting environment and TTY sizing)
+    env_cols = os.environ.get("COLUMNS")
+    if env_cols and env_cols.isdigit():
+        term_w = int(env_cols)
+    else:
+        try:
+            term_w = shutil.get_terminal_size((96, 24)).columns
+        except Exception:
+            term_w = 96
 
     temp_val = m["temp_val"]
     temp_color = "#e57373" if temp_val > 83.0 else ("#f0ad4e" if temp_val > 70.0 else "#81c784")
@@ -249,55 +258,107 @@ def generate_rich_hud(m):
 
     serial_color = "#67d8ef" if m["serial_devs"] else "#64748b"
 
-    table = Table(
-        box=None,
-        show_header=False,
-        padding=(0, 1),
-        collapse_padding=True,
-        expand=True
-    )
+    # Layout branch: WIDE (>= 92 cols) vs COMPACT / HALF-PANE (< 92 cols)
+    if term_w >= 92:
+        card_w = min(term_w, 94)
+        console = Console(width=card_w, height=30)
 
-    table.add_column("L1", width=11, style="bold #cbd5e1", no_wrap=True)
-    table.add_column("V1", width=15, no_wrap=True)
-    table.add_column("N1", width=14, style="#64748b", justify="right", no_wrap=True)
-    table.add_column("DIV", width=1, style="#475569", justify="center", no_wrap=True)
-    table.add_column("L2", width=11, style="bold #cbd5e1", no_wrap=True)
-    table.add_column("V2", width=15, no_wrap=True)
-    table.add_column("N2", width=14, style="#64748b", justify="right", no_wrap=True)
+        table = Table(
+            box=None,
+            show_header=False,
+            padding=(0, 1),
+            collapse_padding=True,
+            expand=True
+        )
 
-    table.add_row(
-        "CPU Temp", f"[{temp_color}]{m['temp']}[/]", "≤83°C target",
-        "│",
-        "NVMe Root", f"[#81c784]{m['disk_avail_gb']} GB Free[/]", f"{m['disk_used_pct']}% used Btrfs"
-    )
-    table.add_row(
-        "RAPL Power", f"[#f0ad4e]PL1 {m['pl1']}W / {m['pl2']}W[/]", "enforced 28s",
-        "│",
-        "Battery", f"[{bat_color}]{m['bat_cap']}%[/]", bat_stat.lower()
-    )
-    table.add_row(
-        "Memory", f"[#81c784]{m['mem_avail_gb']:.1f} GB Free[/]", f"/ {m['mem_total_gb']:.1f} GB RAM",
-        "│",
-        "ESP32 Bus", f"[{serial_color}]{m['serial']}[/]", "/dev/ttyUSB*"
-    )
-    table.add_row(
-        "ZRAM Pool", f"[#81c784]{m['zram_pool_gb']:.1f} GB[/]", f"{m['zram_used_mb']} MB used",
-        "│",
-        "Workstation", f"[{git_color}]{git_label}[/]", "origin/main"
-    )
+        table.add_column("L1", width=11, style="bold #cbd5e1", no_wrap=True)
+        table.add_column("V1", width=15, no_wrap=True)
+        table.add_column("N1", width=14, style="#64748b", justify="right", no_wrap=True)
+        table.add_column("DIV", width=1, style="#475569", justify="center", no_wrap=True)
+        table.add_column("L2", width=11, style="bold #cbd5e1", no_wrap=True)
+        table.add_column("V2", width=15, no_wrap=True)
+        table.add_column("N2", width=14, style="#64748b", justify="right", no_wrap=True)
 
-    panel = Panel(
-        table,
-        title="[bold #e2b714] J.A.R.V.I.S. [/][bold #cbd5e1]•[/] [#94a3b8] Hardware Telemetry [/]",
-        title_align="left",
-        subtitle="[#64748b] Acer Swift Go 14 (SFG14-71) • Omarchy Linux [/]",
-        subtitle_align="right",
-        border_style="#475569",
-        box=box.ROUNDED,
-        padding=(0, 1),
-        width=96
-    )
-    console.print(panel)
+        table.add_row(
+            "CPU Temp", f"[{temp_color}]{m['temp']}[/]", "≤83°C target",
+            "│",
+            "NVMe Root", f"[#81c784]{m['disk_avail_gb']} GB Free[/]", f"{m['disk_used_pct']}% used Btrfs"
+        )
+        table.add_row(
+            "RAPL Power", f"[#f0ad4e]PL1 {m['pl1']}W / {m['pl2']}W[/]", "enforced 28s",
+            "│",
+            "Battery", f"[{bat_color}]{m['bat_cap']}%[/]", bat_stat.lower()
+        )
+        table.add_row(
+            "Memory", f"[#81c784]{m['mem_avail_gb']:.1f} GB Free[/]", f"/ {m['mem_total_gb']:.1f} GB RAM",
+            "│",
+            "ESP32 Bus", f"[{serial_color}]{m['serial']}[/]", "/dev/ttyUSB*"
+        )
+        table.add_row(
+            "ZRAM Pool", f"[#81c784]{m['zram_pool_gb']:.1f} GB[/]", f"{m['zram_used_mb']} MB used",
+            "│",
+            "Workstation", f"[{git_color}]{git_label}[/]", "origin/main"
+        )
+
+        panel = Panel(
+            table,
+            title="[bold #e2b714] J.A.R.V.I.S. [/][bold #cbd5e1]•[/] [#94a3b8] Hardware Telemetry [/]",
+            title_align="left",
+            subtitle="[#64748b] Acer Swift Go 14 • Omarchy Linux [/]",
+            subtitle_align="right",
+            border_style="#475569",
+            box=box.ROUNDED,
+            padding=(0, 1),
+            width=card_w
+        )
+        console.print(panel)
+    else:
+        # Dynamic half-pane / compact mode (1 column of 8 rows)
+        card_w = min(term_w, 66)
+        console = Console(width=card_w, height=30)
+
+        table = Table(
+            box=None,
+            show_header=False,
+            padding=(0, 1),
+            collapse_padding=True,
+            expand=True
+        )
+
+        table.add_column("Label", width=12, style="bold #cbd5e1", no_wrap=True)
+        table.add_column("Value", no_wrap=True)
+        if card_w >= 52:
+            table.add_column("Note", style="#64748b", justify="right", no_wrap=True)
+
+        rows = [
+            ("CPU Temp", f"[{temp_color}]{m['temp']}[/]", "≤83°C target"),
+            ("RAPL Power", f"[#f0ad4e]PL1 {m['pl1']}W / {m['pl2']}W[/]", "enforced 28s"),
+            ("Physical RAM", f"[#81c784]{m['mem_avail_gb']:.1f} GB Free[/]", f"/ {m['mem_total_gb']:.1f} GB RAM"),
+            ("ZRAM Swap", f"[#81c784]{m['zram_pool_gb']:.1f} GB Pool[/]", f"{m['zram_used_mb']} MB used"),
+            ("NVMe Root", f"[#81c784]{m['disk_avail_gb']} GB Free[/]", f"{m['disk_used_pct']}% used Btrfs"),
+            ("Battery", f"[{bat_color}]{m['bat_cap']}%[/]", bat_stat.lower()),
+            ("ESP32 Bus", f"[{serial_color}]{m['serial']}[/]", "/dev/ttyUSB*"),
+            ("Workstation", f"[{git_color}]{git_label}[/]", "origin/main"),
+        ]
+
+        for r in rows:
+            if card_w >= 52:
+                table.add_row(r[0], r[1], r[2])
+            else:
+                table.add_row(r[0], r[1])
+
+        panel = Panel(
+            table,
+            title="[bold #e2b714] J.A.R.V.I.S. [/][bold #cbd5e1]•[/] [#94a3b8] Telemetry [/]",
+            title_align="left",
+            subtitle="[#64748b] Omarchy Bare-Metal [/]",
+            subtitle_align="right",
+            border_style="#475569",
+            box=box.ROUNDED,
+            padding=(0, 1),
+            width=card_w
+        )
+        console.print(panel)
 
 def main():
     stdin_data = ""
