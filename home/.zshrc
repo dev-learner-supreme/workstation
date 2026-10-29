@@ -158,12 +158,6 @@ fi
 alias sync-agent="$HOME/.agents/sync.sh"
 alias agent-doctor="$HOME/.agents/skills/agent-health-check/scripts/doctor.sh"
 
-# J.A.R.V.I.S. Antigravity CLI Launcher
-agy() {
-    python3 "$HOME/.agents/scripts/jarvis-session-init.py" --text
-    command agy "$@"
-}
-
 # ==============================================================================
 # Navigation & Quick Directory Jump Aliases
 # ==============================================================================

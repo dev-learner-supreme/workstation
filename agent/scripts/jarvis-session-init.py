@@ -434,22 +434,6 @@ def main():
     # Hook JSON mode (for Antigravity CLI SessionStart)
     banner = generate_markdown_banner(telemetry)
 
-    if stdin_data:
-        try:
-            payload = json.loads(stdin_data)
-            conv_id = payload.get("conversationId")
-            if conv_id:
-                uid = os.getuid()
-                runtime_dir = f"/run/user/{uid}" if os.path.isdir(f"/run/user/{uid}") else "/tmp"
-                lock_file = os.path.join(runtime_dir, f"jarvis_session_{conv_id}.lock")
-                if os.path.exists(lock_file):
-                    print(json.dumps({"injectSteps": []}))
-                    return
-                with open(lock_file, "w", encoding="utf-8") as f:
-                    f.write(str(os.getpid()))
-        except Exception:
-            pass
-
     response = {
         "injectSteps": [
             {
@@ -457,12 +441,8 @@ def main():
                     "systemMessage": (
                         "J.A.R.V.I.S. PROTOCOL ENGAGED: Workspace rules, skills, and hardware telemetry verified nominal.\n\n"
                         f"{banner}\n\n"
-                        "MANDATE: On turn 1 of every session, after /clear, or upon /resume: ALWAYS confirm J.A.R.V.I.S. operational "
-                        "status by referencing the live telemetry matrix above."
-                    ),
-                    "metadata": {
-                        "user_markdown": banner
-                    }
+                        "MANDATE: On Turn 1 of every session, after /clear, or upon /resume: You MUST begin your very first response with the canonical ASCII banner and live hardware telemetry matrix provided above."
+                    )
                 }
             }
         ]
