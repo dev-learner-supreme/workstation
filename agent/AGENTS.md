@@ -48,6 +48,12 @@ These instructions apply across all projects, repositories, and operations in th
 * **Storage & File Persistence:**
   * Shared 512 GB SSD. Keep build caches (`.next`, `build/`, `.gradle`) trimmed.
   * **NEVER leave exclusive copies of user files or configs in `/tmp`.** `/tmp` is wiped on reboot/restart. Always store user files, backups, and configs in durable locations under `$HOME/`.
+* **Build Toolchain Memory Hygiene (Java / Gradle Daemons):**
+  * Android Gradle and Kotlin compiler daemons (`KotlinCompileDaemon`) hold large persistent heaps (often consuming 5–9 GB resident RAM).
+  * **Always terminate Java subprocesses (`./gradlew --stop` / `pkill -f KotlinCompileDaemon`) immediately upon concluding build, bundle, or test operations**, unless consecutive builds are running back-to-back. Never leave idle build daemons consuming system working memory.
+* **Build Toolchain Memory Hygiene (Java / Gradle Daemons):**
+  * Android Gradle and Kotlin compiler daemons (`KotlinCompileDaemon`) hold large persistent heaps (often consuming 5–9 GB resident RAM).
+  * **Always terminate Java subprocesses (`./gradlew --stop` / `pkill -f KotlinCompileDaemon`) immediately upon concluding build, bundle, or test operations**, unless consecutive builds are running back-to-back. Never leave idle build daemons consuming system working memory.
 
 ---
 
