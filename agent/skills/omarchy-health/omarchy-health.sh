@@ -236,7 +236,9 @@ if [[ -d $R/.git ]]; then
   while read -r f; do
     [[ -e $HOME/$f ]] && ! cmp -s "$HOME/$f" "$R/home/$f" && { echo "    changed since snapshot: ~/$f"; drift=1; }
   done < <(cd "$R/home" && find . -type f | sed 's|^\./||')
-  ! diff -rq "$HOME/.claude/projects/-home-arun/memory" "$R/claude/memory" >/dev/null 2>&1 && { echo "    changed since snapshot: Claude memory"; drift=1; }
+  if [[ -d "$HOME/.claude/projects/-home-arun/memory" && -d "$R/claude/memory" ]]; then
+    ! diff -rq "$HOME/.claude/projects/-home-arun/memory" "$R/claude/memory" >/dev/null 2>&1 && { echo "    changed since snapshot: Claude memory"; drift=1; }
+  fi
   ((drift)) && WARN "files changed since the last snapshot (run $R/sync.sh)" || OK "snapshot up to date"
   if ! git -C "$R" rev-parse -q --verify '@{upstream}' >/dev/null 2>&1; then
     WARN "repo never pushed (run: $R/sync.sh --push)"
