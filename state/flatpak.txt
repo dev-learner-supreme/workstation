@@ -1,2 +1,1 @@
-com.jeffser.Alpaca	flathub
 it.mijorus.gearlever	flathub
