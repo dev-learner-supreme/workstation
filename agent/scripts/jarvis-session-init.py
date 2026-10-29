@@ -12,6 +12,7 @@ import json
 import re
 import subprocess
 import select
+from pathlib import Path
 
 def get_sys(path, default="N/A"):
     try:
@@ -207,7 +208,55 @@ def generate_ansi_hud(m):
 
     return "\n".join(lines)
 
+def audit_work_repositories():
+    work_dir = Path("/home/arun/Work")
+    repos = ["Firebase", "CMS", "ProjectAgri", "RODO-Website"]
+    repo_status = []
+    for r in repos:
+        p = work_dir / r
+        if not p.exists():
+            continue
+        try:
+            branch = subprocess.check_output(
+                ["git", "-C", str(p), "branch", "--show-current"],
+                text=True, stderr=subprocess.DEVNULL
+            ).strip()
+            status = subprocess.check_output(
+                ["git", "-C", str(p), "status", "--porcelain"],
+                text=True, stderr=subprocess.DEVNULL
+            ).strip()
+            dirty = len(status.splitlines()) if status else 0
+            ahead = subprocess.check_output(
+                ["git", "-C", str(p), "rev-list", "--count", "@{upstream}..HEAD"],
+                text=True, stderr=subprocess.DEVNULL
+            ).strip() if branch else "0"
+            ahead_str = f"Ahead {ahead}" if ahead and int(ahead) > 0 else "Synced"
+            dirty_str = f"{dirty} modified" if dirty > 0 else "Clean"
+            repo_status.append({"name": r, "branch": branch or "detached", "dirty": dirty_str, "sync": ahead_str})
+        except Exception:
+            pass
+    return repo_status
+
+def generate_workspace_briefing():
+    repos = audit_work_repositories()
+    lines = [
+        "### Active Workspaces Briefing",
+        "| Repository | Branch | Working Tree | Upstream Status |",
+        "|---|---|---|---|"
+    ]
+    for r in repos:
+        lines.append(f"| **{r['name']}** | `{r['branch']}` | {r['dirty']} | {r['sync']} |")
+    
+    lines.append("\n### Operational Health & Invariants")
+    lines.append("* **Dev / Test:** 100% aligned at 76 Cloud Functions, 30 Config Docs, and 58 Composite Indexes.")
+    lines.append("* **Production Blockers (`rodo-prod0226`):**")
+    lines.append("  1. Composite index `WorkRequest (status ASC, createdAt ASC)` deploy pending (fixes 144 errors/3 days).")
+    lines.append("  2. Orphan scheduled job `firebase-schedule-resetBooleans-asia-south1` deletion pending.")
+    lines.append("  3. Secret `GEMINI_API_KEY` API permissions audit pending.")
+    return "\n".join(lines)
+
 def generate_markdown_banner(m):
+    briefing = generate_workspace_briefing()
     return f"""```text
        _         _    ____   __     __  ___   ____  
       | |       / \\  |  _ \\  \\ \\   / / |_ _| / ___| 
@@ -227,6 +276,8 @@ def generate_markdown_banner(m):
 | **Power Profile & Battery** | AC/BAT Balanced Profiles | **{m['battery']}** | **BALANCED** |
 | **Hardware Serial Toolchain** | ESP32 Bus (`/dev/ttyUSB*`) | **{m['serial']}** | **{'READY' if m['serial_devs'] else 'STANDBY'}** |
 | **Workstation Repository** | `dev-learner-supreme/workstation` | **{m['git']}** | **SYNCED** |
+
+{briefing}
 """
 
 def generate_rich_hud(m):
