@@ -58,7 +58,7 @@ def audit_recent_commits():
 
 def audit_whitelist():
     """Verify Antigravity whitelist synchronization."""
-    whitelist_script = AGENTS_DIR / "skills" / "antigravity-whitelist" / "scripts" / "manage-whitelist.sh"
+    whitelist_script = AGENTS_DIR / "skills" / "antigravity-whitelist" / "manage-whitelist.sh"
     if whitelist_script.exists():
         ok, out, _ = run_cmd(f"bash {whitelist_script} status")
         return ok, out if ok else "Whitelist sync error"

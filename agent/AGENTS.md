@@ -92,6 +92,9 @@ These instructions apply across all projects, repositories, and operations in th
   * When Arun corrects an architectural decision, library preference, or convention, immediately persist it into the corresponding repository profile under `~/.agents/projects/` or a skill under `~/.agents/skills/`.
   * Track where time or tokens are wasted and convert recurring friction points into runbooks or rules.
   * Whenever configuration or memory files in `~/.agents/` are updated, execute the auto-sync protocol (`~/.agents/sync.sh`) to commit and push changes immediately to the private GitHub upstream.
+* **Autonomous Self-Upgrade & Invariant Capture (Zero Prompt Delay):**
+  * Never wait for Arun to ask to update memory or capture learnings. The moment an operational task, bugfix, or deployment is completed, autonomously consolidate new operational invariants into [MEMORY.md](MEMORY.md), update repository profiles under `~/.agents/projects/`, enforce the 250-line pruning threshold on `MEMORY.md`, and execute `~/.agents/sync.sh` immediately.
+  * A weekly autonomous maintenance sweep is enforced via systemd user timer `jarvis-self-upgrade.timer` running `~/.agents/skills/jarvis-self-upgrade/scripts/upgrade.py`.
 * **Safe Pruning & Memory Trimming:**
   * **Immutable Core:** Safety boundaries, prod isolation, zero AI attribution, hardware constraints, and J.A.R.V.I.S. protocol are permanent and NEVER pruned.
   * **Operational Memory Trimming:** When `MEMORY.md` reaches ~250 lines, prune completed tasks, merged branch references, and transient logs. Compress historical findings into dense 1-line technical invariants.
