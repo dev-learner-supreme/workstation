@@ -5,7 +5,7 @@
 * **Storage Layer:** Btrfs on LUKS2 with persistent `allow-discards` (TRIM active, `discard_max_bytes=2T`).
 * **Hardware Permissions:** User `arun` in `uucp` (GID 984) & `dialout` for native ESP32 serial communication.
 * **Power Management:** `/usr/local/sbin/cpu-power-cap` (PL1 18W / PL2 35W / tau 28s) locked to <83°C package thermal threshold.
-* **Shell Architecture:** `/bin/bash` login shell for Omarchy stability; `foot` spawns `zsh` natively with size 9 JetBrainsMono Nerd Font. `SSH_AUTH_SOCK` bound to systemd user `ssh-agent.socket`.
+* **Shell Architecture:** `/bin/bash` login shell for Omarchy stability; `foot` spawns `zsh` natively with size 13 JetBrainsMono Nerd Font. `SSH_AUTH_SOCK` bound to systemd user `ssh-agent.socket`.
 * **Desktop Plugins:** Spaces (`tornikegomareli.spaces` pinned at `458852c`) and Pomodoro (`techywilbur.pomodoro` pinned at `475b130c`) enabled; native workspaces disabled. Cursor theme: `breeze_cursors`.
 * **Target Projects:**
   * Dev: `final-15ec5`
