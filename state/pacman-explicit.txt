@@ -130,6 +130,7 @@ postgresql-libs
 power-profiles-daemon
 python-gobject
 python-poetry-core
+python-rich
 qemu-user-static-binfmt
 qrencode
 qt6-imageformats

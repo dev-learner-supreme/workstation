@@ -231,11 +231,11 @@ def generate_markdown_banner(m):
 
 def generate_rich_hud(m):
     from rich.console import Console
-    from rich.panel import Panel
     from rich.table import Table
+    from rich.panel import Panel
     from rich import box
 
-    console = Console()
+    console = Console(width=96, height=30)
 
     temp_val = m["temp_val"]
     temp_color = "#e57373" if temp_val > 83.0 else ("#f0ad4e" if temp_val > 70.0 else "#81c784")
@@ -249,37 +249,45 @@ def generate_rich_hud(m):
 
     serial_color = "#67d8ef" if m["serial_devs"] else "#64748b"
 
-    # Create 2 sub-tables for left and right columns
-    t_left = Table(box=None, show_header=False, pad_edge=False, padding=(0, 1), expand=True)
-    t_left.add_column("Label", style="bold #cbd5e1", width=12)
-    t_left.add_column("Value", width=16)
-    t_left.add_column("Note", style="#64748b", justify="right")
+    table = Table(
+        box=None,
+        show_header=False,
+        padding=(0, 1),
+        collapse_padding=True,
+        expand=True
+    )
 
-    t_left.add_row("CPU Temp", f"[{temp_color}]{m['temp']}[/]", "≤83°C target")
-    t_left.add_row("RAPL Power", f"[#f0ad4e]PL1 {m['pl1']}W / {m['pl2']}W[/]", "enforced 28s")
-    t_left.add_row("Memory", f"[#81c784]{m['mem_avail_gb']:.1f} GB Free[/]", f"/ {m['mem_total_gb']:.1f} GB RAM")
-    t_left.add_row("ZRAM Pool", f"[#81c784]{m['zram_pool_gb']:.1f} GB[/]", f"{m['zram_used_mb']} MB used")
+    table.add_column("L1", width=11, style="bold #cbd5e1", no_wrap=True)
+    table.add_column("V1", width=15, no_wrap=True)
+    table.add_column("N1", width=14, style="#64748b", justify="right", no_wrap=True)
+    table.add_column("DIV", width=1, style="#475569", justify="center", no_wrap=True)
+    table.add_column("L2", width=11, style="bold #cbd5e1", no_wrap=True)
+    table.add_column("V2", width=15, no_wrap=True)
+    table.add_column("N2", width=14, style="#64748b", justify="right", no_wrap=True)
 
-    t_right = Table(box=None, show_header=False, pad_edge=False, padding=(0, 1), expand=True)
-    t_right.add_column("Label", style="bold #cbd5e1", width=12)
-    t_right.add_column("Value", width=16)
-    t_right.add_column("Note", style="#64748b", justify="right")
+    table.add_row(
+        "CPU Temp", f"[{temp_color}]{m['temp']}[/]", "≤83°C target",
+        "│",
+        "NVMe Root", f"[#81c784]{m['disk_avail_gb']} GB Free[/]", f"{m['disk_used_pct']}% used Btrfs"
+    )
+    table.add_row(
+        "RAPL Power", f"[#f0ad4e]PL1 {m['pl1']}W / {m['pl2']}W[/]", "enforced 28s",
+        "│",
+        "Battery", f"[{bat_color}]{m['bat_cap']}%[/]", bat_stat.lower()
+    )
+    table.add_row(
+        "Memory", f"[#81c784]{m['mem_avail_gb']:.1f} GB Free[/]", f"/ {m['mem_total_gb']:.1f} GB RAM",
+        "│",
+        "ESP32 Bus", f"[{serial_color}]{m['serial']}[/]", "/dev/ttyUSB*"
+    )
+    table.add_row(
+        "ZRAM Pool", f"[#81c784]{m['zram_pool_gb']:.1f} GB[/]", f"{m['zram_used_mb']} MB used",
+        "│",
+        "Workstation", f"[{git_color}]{git_label}[/]", "origin/main"
+    )
 
-    t_right.add_row("NVMe Root", f"[#81c784]{m['disk_avail_gb']} GB Free[/]", f"{m['disk_used_pct']}% used Btrfs")
-    t_right.add_row("Battery", f"[{bat_color}]{m['bat_cap']}%[/]", bat_stat.lower())
-    t_right.add_row("ESP32 Bus", f"[{serial_color}]{m['serial']}[/]", "/dev/ttyUSB*")
-    t_right.add_row("Workstation", f"[{git_color}]{git_label}[/]", "origin/main")
-
-    # Main layout grid combining both columns with a subtle vertical divider
-    grid = Table.grid(expand=True, padding=(0, 1))
-    grid.add_column(ratio=1)
-    grid.add_column(width=1)
-    grid.add_column(ratio=1)
-    grid.add_row(t_left, "[#475569]│[/]", t_right)
-
-    card_width = min(console.width or 96, 96)
     panel = Panel(
-        grid,
+        table,
         title="[bold #e2b714] J.A.R.V.I.S. [/][bold #cbd5e1]•[/] [#94a3b8] Hardware Telemetry [/]",
         title_align="left",
         subtitle="[#64748b] Acer Swift Go 14 (SFG14-71) • Omarchy Linux [/]",
@@ -287,7 +295,7 @@ def generate_rich_hud(m):
         border_style="#475569",
         box=box.ROUNDED,
         padding=(0, 1),
-        width=card_width,
+        width=96
     )
     console.print(panel)
 
