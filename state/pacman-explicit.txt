@@ -153,6 +153,7 @@ thermald
 tldr
 tmux
 tobi-try
+tree
 tree-sitter-cli
 ttf-ia-writer
 ttf-jetbrains-mono-nerd-basic

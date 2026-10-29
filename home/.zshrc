@@ -147,12 +147,6 @@ if command -v starship &>/dev/null; then
 fi
 
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f "$HOME/Work/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/Work/google-cloud-sdk/path.zsh.inc"; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f "$HOME/Work/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/Work/google-cloud-sdk/completion.zsh.inc"; fi
-
 # fnm
 FNM_PATH="$HOME/.local/share/fnm"
 if [ -d "$FNM_PATH" ]; then
@@ -190,3 +184,9 @@ alias cdcms='cd ~/Work/CMS'
 alias cdweb='cd ~/Work/RODO-Website'
 alias cdfb='cd ~/Work/Firebase'
 export PATH="/home/arun/.local/bin:$PATH"
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/home/arun/google-cloud-sdk/path.zsh.inc' ]; then . '/home/arun/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/home/arun/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/arun/google-cloud-sdk/completion.zsh.inc'; fi

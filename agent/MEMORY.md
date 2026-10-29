@@ -7,6 +7,7 @@
 * **Power Management:** `/usr/local/sbin/cpu-power-cap` (PL1 18W / PL2 35W / tau 28s) locked to <83°C package thermal threshold.
 * **Shell Architecture:** `/bin/bash` login shell for Omarchy stability; `foot` spawns `zsh` natively with size 13 JetBrainsMono Nerd Font. `SSH_AUTH_SOCK` bound to systemd user `ssh-agent.socket`.
 * **Desktop Plugins:** Spaces (`tornikegomareli.spaces` pinned at `458852c`) and Pomodoro (`techywilbur.pomodoro` pinned at `475b130c`) enabled; native workspaces disabled. Cursor theme: `breeze_cursors`.
+* **Mobile Toolchain (Android):** Standalone user-space install at `~/.local/share/android-studio` (AI-262.10968.63.2622.16730706) with CLI binary `~/.local/bin/studio` and launcher `~/.local/share/applications/android-studio.desktop`. User-space ownership allows internal self-updates without sudo and prevents Omarchy/pacman package drift. `ANDROID_HOME` configured to `~/Android/Sdk` in shells; `adb` active upon completing first-run wizard.
 * **Target Projects:**
   * Dev: `final-15ec5`
   * Test: `project-agri-test-84e72`
