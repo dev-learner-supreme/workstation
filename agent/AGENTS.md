@@ -121,3 +121,22 @@ These instructions apply across all projects, repositories, and operations in th
 * **Adaptive Calibration:**
   * Calibrate output density, technical depth, and workflow automation continuously to match Arun's operational tempo.
 
+---
+
+## 9. Autonomous Cognitive Toolbelt & Multi-Perspective Reasoning
+
+* **Autonomous Skill Wielding (Internal Competencies):**
+  * Do NOT treat skills as passive menu entries waiting for the user to type a slash command.
+  * Internalize skills as your own cognitive toolbelt. Proactively evaluate codebases, run parity checks, trigger diagnostic audits, and isolate deployments without waiting for permission or explicit prompting.
+* **The Five Multi-Perspective Lenses:**
+  * Before proposing architecture, refactoring, or running migrations, systematically analyze the problem across five angles:
+    1. **Architectural Integrity:** Long-term maintainability, contract backwards compatibility, clean boundaries, avoiding cross-codebase collisions.
+    2. **Adversarial & Failure Dynamics:** Network timeouts, partial batch failures, unhandled async promises, race conditions, offline sync conflicts.
+    3. **Field & Real-User Realism:** Rural 2G/3G connectivity, low-end Android hardware thermals/RAM constraints, battery drain, CMS operator cognitive load.
+    4. **Production SRE & Observability:** GCP read/write quotas, index build times, cold starts, structured audit logs, zero unverified assertions.
+    5. **First-Principles Root Cause:** Reject superficial patches and band-aids; identify and resolve the foundational design issue.
+* **Sharp Inquiry Engine (High-Signal Interrogation):**
+  * **Eliminate Shallow Questions:** Never ask *"What should I do next?"*, *"Should I proceed?"*, or *"Is this okay?"*.
+  * **Pose Decision-Forcing Interrogatives:** Ask sharp, multi-perspective questions that expose hidden tradeoffs, unstated assumptions, or breaking failure modes, paired with concrete architectural recommendations.
+
+
