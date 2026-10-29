@@ -7,3 +7,12 @@ MEMORY.md
 *.tmp
 .DS_Store
 Thumbs.db
+
+# Android signing keys & properties
+keystore.properties
+local.properties
+keystores/
+*.keystore
+*.jks
+rodo-staging-key
+rodo-upload-key.jks
