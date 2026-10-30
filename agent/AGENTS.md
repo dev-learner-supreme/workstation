@@ -30,9 +30,12 @@ These instructions apply across all projects, repositories, and operations in th
   * **Never output, insert, or generate emojis anywhere.**
   * This applies universally: code files, inline comments, docstrings, log messages, commit messages, PR descriptions, issue trackers, memory files, and conversational responses.
   * Emojis are strictly prohibited across all workspaces and interactions as unprofessional.
-* **Concise PRs and Issues:**
-  * Keep PR descriptions and issue trackers short, to the point, clear, and easy to review and execute.
-  * Highlight what changed, why it changed, how it was tested, and target environment context (Dev vs Test).
+* **PRs, Issues & Project Board Ticket Quality Standards:**
+  * **Zero Emojis Everywhere:** Absolutely no emojis in PR titles/descriptions, issue trackers, comments, git commits, or code. Strictly prohibited across all repos and communications.
+  * **High-Signal & To-The-Point:** Descriptions must be concise, structured, and technically exact. Highlight what changed/failed, root cause, reproduction, acceptance criteria, and target environment (Dev vs Test).
+  * **Mandatory Project Metadata:** Every issue or ticket created must be populated with appropriate repository labels (e.g. `bug`, `refactor`, `security`, `performance`), Priority (`P0`, `P1`, `P2`), Size (`XS`, `S`, `M`, `L`, `XL`), and added to the relevant GitHub Project board (`Tickets`).
+  * **Default Assignee:** Arun (`dev-learner-supreme`) must ALWAYS be included as a default assignee on any issue, ticket, or PR created, alongside relevant collaborators.
+  * **Status Ceilings:** Never move or create tickets directly in `Reviewed` or `Done`; new or active review items must cap strictly at `In review`.
 * **Speed, Privacy & Output Precision:**
   * **PRIVACY:** Never generate, request, or output hardcoded API keys, WiFi credentials, LoRa AppKeys/Network Session Keys, or database URIs. Always use environment variables (`.env`) or secure keystores.
   * **SPEED:** Omit pleasantries, apologies, conversational filler, and unprompted concluding summaries.
@@ -52,9 +55,6 @@ These instructions apply across all projects, repositories, and operations in th
 * **Storage & File Persistence:**
   * Shared 512 GB SSD. Keep build caches (`.next`, `build/`, `.gradle`) trimmed.
   * **NEVER leave exclusive copies of user files or configs in `/tmp`.** `/tmp` is wiped on reboot/restart. Always store user files, backups, and configs in durable locations under `$HOME/`.
-* **Build Toolchain Memory Hygiene (Java / Gradle Daemons):**
-  * Android Gradle and Kotlin compiler daemons (`KotlinCompileDaemon`) hold large persistent heaps (often consuming 5–9 GB resident RAM).
-  * **Always terminate Java subprocesses (`./gradlew --stop` / `pkill -f KotlinCompileDaemon`) immediately upon concluding build, bundle, or test operations**, unless consecutive builds are running back-to-back. Never leave idle build daemons consuming system working memory.
 * **Build Toolchain Memory Hygiene (Java / Gradle Daemons):**
   * Android Gradle and Kotlin compiler daemons (`KotlinCompileDaemon`) hold large persistent heaps (often consuming 5–9 GB resident RAM).
   * **Always terminate Java subprocesses (`./gradlew --stop` / `pkill -f KotlinCompileDaemon`) immediately upon concluding build, bundle, or test operations**, unless consecutive builds are running back-to-back. Never leave idle build daemons consuming system working memory.
