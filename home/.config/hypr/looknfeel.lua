@@ -65,3 +65,8 @@ o.window(".*", { tag = "-default-opacity", opacity = "1.0 1.0" })
 -- Breeze cursor (the KDE default); size stays at Omarchy's 24.
 hl.env("XCURSOR_THEME", "breeze_cursors")
 hl.env("HYPRCURSOR_THEME", "breeze_cursors")
+
+-- Opt another application in to Omarchy's standard transparency.
+-- Find its class with: hyprctl clients
+-- o.transparent_window("my-app")
+-- o.transparent_window("my-app", "0.9 0.85") -- Custom active/inactive opacity.

@@ -49,6 +49,4 @@ o.bind_toggle("F10", "Toggle touchpad", "touchpad", { locked = true })
 o.bind("XF86Launch6", "Mute microphone", "omarchy-audio-input-mute", { locked = true })
 
 -- SUPER + L locks (was: Toggle workspace layout, moved to SUPER + SHIFT + L)
-hl.unbind("SUPER + L")
-o.bind("SUPER + L", "Lock system", "omarchy-system-lock")
 o.bind("SUPER + SHIFT + L", "Toggle workspace layout", "omarchy-hyprland-workspace-layout-toggle")

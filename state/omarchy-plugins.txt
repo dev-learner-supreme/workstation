@@ -11,7 +11,9 @@ omarchy.clock                    enabled   first-party bar-widget         Clock
 omarchy.dev-gallery              enabled   first-party panel              Dev gallery
 omarchy.disk-speedtest           enabled   first-party panel              Disk speed test
 omarchy.monitor                  enabled   first-party bar-widget         Display
+omarchy.dock                     enabled   first-party service            Dock
 omarchy.dropbox                  disabled  first-party bar-widget         Dropbox
+omarchy.elsewhen                 enabled   first-party bar-widget         Elsewhen
 omarchy.emojis                   enabled   first-party overlay            Emojis
 omarchy.idle                     enabled   first-party service            Idle
 omarchy.image-picker             enabled   first-party overlay            Image picker
@@ -30,6 +32,7 @@ omarchy.polkit                   enabled   first-party service            Polkit
 techywilbur.pomodoro             enabled   third-party service,bar-widget Pomodoro
 omarchy.power                    enabled   first-party bar-widget         Power
 omarchy.reminders                enabled   first-party overlay            Reminders
+omarchy.remote-session           enabled   first-party service            Remote Session
 omarchy.spacer                   disabled  first-party bar-widget         Spacer
 tornikegomareli.spaces           enabled   third-party bar-widget         Spaces
 omarchy.speedtest                enabled   first-party panel              Speed Test

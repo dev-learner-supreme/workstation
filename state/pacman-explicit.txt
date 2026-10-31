@@ -21,12 +21,12 @@ cups
 cups-filters
 cups-pk-helper
 ddcutil
+disktree-bin
 docker
 docker-buildx
 docker-compose
 dosfstools
 dotnet-runtime
-dua-cli
 easyeffects
 efibootmgr
 evince
@@ -35,7 +35,11 @@ expac
 eza
 fastfetch
 fcitx5
+fcitx5-chewing
+fcitx5-chinese-addons
 fcitx5-gtk
+fcitx5-hangul
+fcitx5-mozc
 fcitx5-qt
 fd
 ffmpegthumbnailer
@@ -47,6 +51,7 @@ fwupd
 fzf
 git
 github-cli
+gliff
 gnome-disk-utility
 gnome-keyring
 gnome-themes-extra
@@ -104,11 +109,16 @@ noto-fonts-cjk
 noto-fonts-emoji
 nss-mdns
 omarchy
+omarchy-hyprland-titlebars
 omarchy-keyring
 omarchy-nvim
+omarchy-power-profiles-daemon
 omarchy-settings
 omarchy-zsh
+omasnap
 omazed
+owe
+owe-lockfeed
 pacman-contrib
 pamixer
 pipewire
@@ -117,7 +127,6 @@ pipewire-jack
 pipewire-pulse
 plocate
 postgresql-libs
-power-profiles-daemon
 python-gobject
 python-poetry-core
 python-rich
@@ -136,7 +145,6 @@ sudo
 sushi
 system-config-printer
 tailscale
-tensaku
 tesseract
 tesseract-data-eng
 thermald
@@ -154,6 +162,7 @@ ufw
 ufw-docker
 usage
 uwsm
+vi
 vpl-gpu-rt
 vulkan-intel
 wev

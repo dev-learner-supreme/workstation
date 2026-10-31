@@ -1,42 +1,50 @@
 {
-  "version": 1,
-  "idle": {
-    "screensaver": 150,
-    "lock": 300
-  },
   "bar": {
-    "position": "top",
-    "transparent": false,
-    "centerAnchor": "omarchy.clock",
+    "background": "opaque",
     "layout": {
-      "left": [
-        {
-          "id": "omarchy.menu"
-        },
-        {
-          "id": "tornikegomareli.spaces"
-        },
-        {
-          "id": "techywilbur.pomodoro",
-          "sound": false,
-          "overlay": false,
-          "focus": 25
-        }
-      ],
       "center": [
         {
-          "id": "omarchy.indicators"
-        },
-        {
-          "id": "omarchy.clock",
+          "birthYear": 0,
           "format": "ddd d MMM HH:mm",
           "formatAlt": "d MMMM 'W'ww yyyy",
-          "verticalFormat": "HH\n—\nmm",
-          "birthYear": 0,
-          "lifeExpectancy": 85
-        },
+          "id": "omarchy.clock",
+          "lifeExpectancy": 85,
+          "verticalFormat": "HH\n—\nmm"
+        }
+      ],
+      "centerBegin": [
         {
-          "id": "omarchy.keyboard-layout"
+          "id": "omarchy.indicators"
+        }
+      ],
+      "centerEnd": [
+        {
+          "id": "omarchy.elsewhen",
+          "cities": [
+            {
+              "name": "Kolkata",
+              "zone": "Asia/Kolkata"
+            },
+            {
+              "name": "Tokyo",
+              "zone": "Asia/Tokyo"
+            },
+            {
+              "name": "Gold Coast",
+              "zone": "Australia/Brisbane",
+              "lat": -28.00029,
+              "lon": 153.43088,
+              "region": "Queensland, AU"
+            },
+            {
+              "name": "Brisbane",
+              "zone": "Australia/Brisbane",
+              "people": [
+                "Shanabe"
+              ]
+            }
+          ],
+          "units": "C"
         },
         {
           "id": "omarchy.weather"
@@ -45,9 +53,26 @@
           "id": "omarchy.system-update"
         }
       ],
+      "left": [
+        {
+          "id": "omarchy.menu"
+        },
+        {
+          "id": "tornikegomareli.spaces"
+        },
+        {
+          "focus": 25,
+          "id": "techywilbur.pomodoro",
+          "overlay": false,
+          "sound": false
+        }
+      ],
       "right": [
         {
           "id": "omarchy.tray"
+        },
+        {
+          "id": "omarchy.keyboard-layout"
         },
         {
           "id": "omarchy.agents"
@@ -68,8 +93,15 @@
           "id": "omarchy.power",
           "showPercentage": true
         }
-      ]
-    }
+      ],
+      "tray": []
+    },
+    "position": "top"
   },
-  "plugins": []
+  "idle": {
+    "lock": 300,
+    "screensaver": 150
+  },
+  "plugins": [],
+  "version": 1
 }
